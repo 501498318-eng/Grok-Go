@@ -1,0 +1,33 @@
+# Dependencies and build output
+node_modules/
+dist/
+dist-electron/
+release/
+coverage/
+
+# Local test and design artifacts
+.playwright-cli/
+playwright-report/
+test-results/
+output/
+outputs/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+profiles.json
+config.toml
+config.toml.*
+*.bak
+
+# Packaged applications and logs
+*.exe
+*.msi
+*.log
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

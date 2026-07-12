@@ -1,0 +1,4 @@
+allowBuilds:
+  app-builder-bin: true
+  electron: true
+  esbuild: true
