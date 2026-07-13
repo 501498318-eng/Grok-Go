@@ -39,7 +39,7 @@ export interface ValidationResult {
 }
 
 export interface ApplyOptions {
-  expectedHash?: string | null;
+  expectedHash?: string;
   force?: boolean;
 }
 

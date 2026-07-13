@@ -1,9 +1,0 @@
-/* ========== Shell ========== */
-
-.app-shell {
-  height: 100vh;
-  min-height: 720px;
-  display: grid;
-  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-  background: var(--bg-app);
-}

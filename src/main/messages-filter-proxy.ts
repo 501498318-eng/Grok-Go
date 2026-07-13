@@ -106,7 +106,6 @@ export class MessagesFilterProxy {
   constructor(
     readonly host = "127.0.0.1",
     readonly port = 8787,
-    private readonly upstreamTimeoutMs = 300_000,
   ) {}
 
   get running(): boolean {
@@ -154,9 +153,7 @@ export class MessagesFilterProxy {
       { method: request.method, headers },
       (upstreamResponse) => this.pipeResponse(incoming.pathname, upstreamResponse, response),
     );
-    upstream.setTimeout(this.upstreamTimeoutMs, () =>
-      upstream.destroy(new Error("上游请求超时")),
-    );
+    upstream.setTimeout(300_000, () => upstream.destroy(new Error("上游请求超时")));
     upstream.on("error", (error) => {
       if (response.headersSent) return response.destroy(error);
       response.writeHead(502, { "content-type": "application/json", connection: "close" });
@@ -177,11 +174,6 @@ export class MessagesFilterProxy {
     const headers = Object.fromEntries(
       Object.entries(upstream.headers).filter(([key]) => !HOP_BY_HOP.has(key.toLowerCase())),
     );
-    const abortDownstream = () => {
-      if (!response.destroyed) response.destroy(new Error("上游响应中断"));
-    };
-    upstream.on("aborted", abortDownstream);
-    upstream.on("error", abortDownstream);
     if (isMessages) delete headers["content-length"];
     response.writeHead(upstream.statusCode ?? 502, { ...headers, connection: "close" });
     if (!isMessages) return void upstream.pipe(response);
@@ -215,3 +207,4 @@ export class MessagesFilterProxy {
     });
   }
 }
+

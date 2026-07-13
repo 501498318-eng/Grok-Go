@@ -248,11 +248,11 @@ export class ProfileService {
     const current = await readFileIfExists(store.configPath);
     const currentExists = current.exists;
     const currentText = current.text;
-    const configChanged = options.expectedHash === null
-      ? currentExists
-      : options.expectedHash !== undefined &&
-        options.expectedHash !== hashText(currentText);
-    if (!options.force && configChanged) {
+    if (
+      !options.force &&
+      options.expectedHash &&
+      options.expectedHash !== hashText(currentText)
+    ) {
       return {
         ok: false,
         conflict: true,
