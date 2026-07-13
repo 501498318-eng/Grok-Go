@@ -1,10 +1,8 @@
 import {
-  Activity,
   AlertTriangle,
   Check,
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
   CircleHelp,
   Copy,
   Cpu,
@@ -29,7 +27,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -40,9 +37,6 @@ import type {
 } from "../shared/types";
 
 const PROFILE_COLORS = ["#0ea5e9", "#0f172a", "#f59e0b", "#8b5cf6", "#10b981", "#f43f5e"];
-const PANEL_MIN = 160;
-const PANEL_MAX = 420;
-const PANEL_DEFAULT = 248;
 
 const PROTOCOL_OPTIONS: Array<{
   value: ProviderProfile["protocol"];
@@ -358,10 +352,8 @@ export function App() {
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [panelTab, setPanelTab] = useState<"diag" | "toml">("diag");
-  const [panelHeight, setPanelHeight] = useState(PANEL_DEFAULT);
-  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
+  const [diagnosticError, setDiagnosticError] = useState("");
 
   const hydrate = useCallback(
     (next: AppSnapshot, preferredId?: string) => {
@@ -391,30 +383,6 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  useEffect(() => {
-    const onMove = (event: MouseEvent) => {
-      if (!dragRef.current) return;
-      const delta = dragRef.current.startY - event.clientY;
-      const next = Math.min(
-        PANEL_MAX,
-        Math.max(PANEL_MIN, dragRef.current.startH + delta),
-      );
-      setPanelHeight(next);
-      if (!panelOpen) setPanelOpen(true);
-    };
-    const onUp = () => {
-      dragRef.current = null;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [panelOpen]);
-
   const sourceProfile = snapshot?.profiles.find((profile) => profile.id === selectedId);
   const dirty = Boolean(
     draft && sourceProfile && JSON.stringify(draft) !== JSON.stringify(sourceProfile),
@@ -440,6 +408,8 @@ export function App() {
     if (key === "baseUrl" || key === "apiKey" || key === "protocol") {
       setValidation(null);
       setModelOptions([]);
+      setDiagnosticOpen(false);
+      setDiagnosticError("");
     }
   };
 
@@ -488,6 +458,8 @@ export function App() {
     setDraft({ ...selected, configuredModels: [...selected.configuredModels] });
     setValidation(null);
     setModelOptions([]);
+    setDiagnosticOpen(false);
+    setDiagnosticError("");
     setError("");
   };
 
@@ -498,18 +470,16 @@ export function App() {
     setDraft(created);
     setValidation(null);
     setModelOptions([]);
-  };
-
-  const openPanel = (tab: "diag" | "toml") => {
-    setPanelTab(tab);
-    setPanelOpen(true);
+    setDiagnosticOpen(false);
+    setDiagnosticError("");
   };
 
   const testConnection = async (): Promise<ValidationResult | null> => {
     if (!draft) return null;
     setBusy("validate");
     setError("");
-    openPanel("diag");
+    setDiagnosticError("");
+    setDiagnosticOpen(true);
     try {
       const result = await window.grokApi.validateProfile(draft);
       setValidation(result);
@@ -517,11 +487,11 @@ export function App() {
       if (result.ok) {
         const validated = { ...draft, lastValidatedAt: new Date().toISOString() };
         setDraft(validated);
-        setToast(result.message);
       }
       return result;
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      const message = reason instanceof Error ? reason.message : String(reason);
+      setDiagnosticError(message);
       return null;
     } finally {
       setBusy(null);
@@ -689,7 +659,7 @@ export function App() {
             className="ghost-button"
             onClick={() =>
               window.alert(
-                "Grok Go v1.6.0\n轻量切换 Grok Build 的第三方供应商配置。",
+                "Grok Go v1.6.1\n轻量切换 Grok Build 的第三方供应商配置。",
               )
             }
           >
@@ -717,18 +687,6 @@ export function App() {
           </div>
           <div className="header-actions">
             <button
-              className="secondary-button"
-              onClick={testConnection}
-              disabled={busy !== null}
-            >
-              {busy === "validate" ? (
-                <LoaderCircle className="spin" size={16} />
-              ) : (
-                <PlugZap size={16} />
-              )}
-              测试连接
-            </button>
-            <button
               className="primary-button"
               onClick={apply}
               disabled={busy !== null}
@@ -744,7 +702,8 @@ export function App() {
         </header>
 
         <div className="workspace-body">
-          <div className="form-stack">
+          <div className="editor-layout">
+            <div className="form-stack">
             <section className="form-section">
               <div className="form-section-head">
                 <span className="section-icon">
@@ -907,7 +866,21 @@ export function App() {
                   <Cpu size={15} />
                 </span>
                 <h2>已配置模型</h2>
-                <p>共 {configuredModelIds(draft).length} 个</p>
+                <div className="section-head-actions">
+                  <span>共 {configuredModelIds(draft).length} 个</span>
+                  <button
+                    className="secondary-button compact-button test-connection-button"
+                    onClick={testConnection}
+                    disabled={busy !== null}
+                  >
+                    {busy === "validate" ? (
+                      <LoaderCircle className="spin" size={15} />
+                    ) : (
+                      <PlugZap size={15} />
+                    )}
+                    测试连接
+                  </button>
+                </div>
               </div>
               <div className="form-section-body">
                 <ModelConfigurator
@@ -951,140 +924,103 @@ export function App() {
                   恢复备份
                 </button>
               </div>
-              <div style={{ display: "flex", gap: 8, color: "var(--text-muted)", fontSize: 12 }}>
+              <div className="backup-status">
                 <span>{snapshot.backupExists ? "已有备份" : "暂无备份"}</span>
-                <span>·</span>
-                <button
-                  type="button"
-                  className="ghost-button compact-button"
-                  onClick={() => openPanel("toml")}
-                  style={{ height: 28 }}
-                >
-                  <FileCode2 size={14} />
-                  查看 TOML
-                </button>
               </div>
             </div>
+            </div>
+
+            <aside className="toml-side-panel" aria-label="config.toml 预览">
+              <div className="toml-side-head">
+                <span className="section-icon dark">
+                  <FileCode2 size={15} />
+                </span>
+                <div>
+                  <h2>config.toml 预览</h2>
+                  <p>根据当前表单实时生成</p>
+                </div>
+              </div>
+              <div className="toml-toolbar">
+                <span title={snapshot.configPath}>{snapshot.configPath}</span>
+                <button className="secondary-button compact-button" onClick={copyPreview}>
+                  <Copy size={13} />
+                  复制
+                </button>
+              </div>
+              <pre className="toml-preview">
+                {previewLines.map((line, index) => (
+                  <span className={classifyTomlLine(line)} key={`${index}-${line}`}>
+                    <i>{index + 1}</i>
+                    <code>{line || " "}</code>
+                  </span>
+                ))}
+              </pre>
+            </aside>
           </div>
         </div>
 
-        <section
-          className={`bottom-panel ${panelOpen ? "" : "collapsed"}`}
-          style={{ height: panelOpen ? panelHeight : "var(--bottom-tab-h)" }}
-          aria-label="诊断与预览面板"
-        >
-          <div
-            className={`panel-resizer ${dragRef.current ? "active" : ""}`}
-            onMouseDown={(event) => {
-              dragRef.current = { startY: event.clientY, startH: panelHeight };
-              document.body.style.cursor = "row-resize";
-              document.body.style.userSelect = "none";
-              if (!panelOpen) setPanelOpen(true);
-            }}
-          />
-          <div className="panel-tabs">
+        {diagnosticOpen ? (
+          <section className="diagnostic-popover" role="status" aria-live="polite">
             <button
               type="button"
-              className={`panel-tab ${panelTab === "diag" ? "active" : ""}`}
-              onClick={() => openPanel("diag")}
+              className="diagnostic-close"
+              onClick={() => setDiagnosticOpen(false)}
+              title="关闭连接诊断"
+              aria-label="关闭连接诊断"
             >
-              <Activity size={14} />
-              连接诊断
-              {validation ? <span className="tab-dot" /> : null}
+              <X size={16} />
             </button>
-            <button
-              type="button"
-              className={`panel-tab ${panelTab === "toml" ? "active" : ""}`}
-              onClick={() => openPanel("toml")}
-            >
-              <FileCode2 size={14} />
-              config.toml 预览
-            </button>
-            <div className="panel-tab-actions">
-              <button
-                type="button"
-                className="icon-button"
-                title={panelOpen ? "收起面板" : "展开面板"}
-                aria-label={panelOpen ? "收起面板" : "展开面板"}
-                onClick={() => setPanelOpen((value) => !value)}
-              >
-                {panelOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="panel-body">
-            {panelTab === "diag" ? (
-              <div className="diag-view">
-                {validation ? (
-                  <>
-                    <div
-                      className={`diag-status-card ${validation.ok ? "ok" : "fail"}`}
-                    >
-                      <span className="diag-icon">
-                        {validation.ok ? <Check size={22} /> : <X size={22} />}
-                      </span>
-                      <div className="diag-status-copy">
-                        <strong>{validation.ok ? "连接成功" : "连接失败"}</strong>
-                        <p>{validation.message}</p>
-                      </div>
-                    </div>
-                    <div className="diag-grid">
-                      <div className="diag-metric">
-                        <label>请求地址</label>
-                        <strong className="mono" title={modelsEndpoint}>
-                          {modelsEndpoint}
-                        </strong>
-                      </div>
-                      <div className="diag-metric">
-                        <label>HTTP 状态</label>
-                        <strong>
-                          {validation.status != null ? validation.status : "—"}
-                        </strong>
-                      </div>
-                      <div className="diag-metric">
-                        <label>响应耗时</label>
-                        <strong>{validation.elapsedMs} ms</strong>
-                      </div>
-                      <div className="diag-metric">
-                        <label>发现模型</label>
-                        <strong>{validation.models.length}</strong>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="diag-empty">
-                    <PlugZap size={28} strokeWidth={1.5} />
-                    <p>点击「测试连接」验证地址、密钥和模型列表。结果会显示在这里。</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="toml-view">
-                <div className="toml-toolbar">
-                  <span>
-                    预览将写入的配置片段 · {snapshot.configPath}
-                  </span>
-                  <button className="secondary-button compact-button" onClick={copyPreview}>
-                    <Copy size={13} />
-                    复制预览
-                  </button>
+            {busy === "validate" ? (
+              <div className="diagnostic-loading">
+                <span className="diag-icon loading">
+                  <LoaderCircle className="spin" size={22} />
+                </span>
+                <div className="diag-status-copy">
+                  <strong>正在测试连接</strong>
+                  <p className="mono" title={modelsEndpoint}>{modelsEndpoint}</p>
                 </div>
-                <pre className="toml-preview">
-                  {previewLines.map((line, index) => (
-                    <span
-                      className={classifyTomlLine(line)}
-                      key={`${index}-${line}`}
-                    >
-                      <i>{index + 1}</i>
-                      <code>{line || " "}</code>
-                    </span>
-                  ))}
-                </pre>
+              </div>
+            ) : validation ? (
+              <>
+                <div className={`diag-status-card ${validation.ok ? "ok" : "fail"}`}>
+                  <span className="diag-icon">
+                    {validation.ok ? <Check size={22} /> : <X size={22} />}
+                  </span>
+                  <div className="diag-status-copy">
+                    <strong>{validation.ok ? "连接成功" : "连接失败"}</strong>
+                    <p>{validation.message}</p>
+                  </div>
+                </div>
+                <div className="diag-grid">
+                  <div className="diag-metric endpoint">
+                    <label>请求地址</label>
+                    <strong className="mono" title={modelsEndpoint}>{modelsEndpoint}</strong>
+                  </div>
+                  <div className="diag-metric">
+                    <label>HTTP 状态</label>
+                    <strong>{validation.status != null ? validation.status : "—"}</strong>
+                  </div>
+                  <div className="diag-metric">
+                    <label>响应耗时</label>
+                    <strong>{validation.elapsedMs} ms</strong>
+                  </div>
+                  <div className="diag-metric">
+                    <label>发现模型</label>
+                    <strong>{validation.models.length}</strong>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="diag-status-card fail">
+                <span className="diag-icon"><X size={22} /></span>
+                <div className="diag-status-copy">
+                  <strong>连接失败</strong>
+                  <p>{diagnosticError || "未能完成连接测试"}</p>
+                </div>
               </div>
             )}
-          </div>
-        </section>
+          </section>
+        ) : null}
       </main>
 
       {settingsOpen ? (

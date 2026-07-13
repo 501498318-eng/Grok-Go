@@ -16,7 +16,7 @@ Grok Go 是一个面向 Windows 的 Grok Build 第三方供应商配置切换器
 
 ## 下载与运行
 
-从 GitHub Releases 下载 `Grok-Go-1.6.0-portable.exe`，双击即可运行，无需安装。
+从 GitHub Releases 下载 `Grok-Go-1.6.1-portable.exe`，双击即可运行，无需安装。
 
 Windows 可能提示“未知发布者”，因为当前版本尚未购买代码签名证书。请仅从本仓库的 Release 页面下载，并使用 Release 中的 `SHA256SUMS.txt` 核对文件哈希。
 
@@ -67,7 +67,7 @@ pnpm run build
 pnpm run dist
 ```
 
-便携版输出到 `release/Grok-Go-1.6.0-portable.exe`。
+便携版输出到 `release/Grok-Go-1.6.1-portable.exe`。
 
 ## 参与贡献
 
