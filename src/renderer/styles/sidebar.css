@@ -1,0 +1,225 @@
+/* ========== Sidebar ========== */
+
+.sidebar {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  -webkit-app-region: drag;
+}
+
+.sidebar-brand > * { -webkit-app-region: no-drag; }
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+}
+
+.brand-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.brand-copy strong {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.brand-copy span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sidebar-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-field svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.search-field input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px 0 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  outline: 0;
+  font-size: 13px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.search-field input::placeholder { color: var(--text-faint); }
+
+.search-field input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  flex-shrink: 0;
+}
+
+.icon-button:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
+.icon-button.solid {
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.icon-button.solid:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+}
+
+.profile-list {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 10px 12px;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.profile-row {
+  position: relative;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.profile-row:hover { background: #eef2f7; }
+
+.profile-row.selected {
+  background: var(--bg-surface);
+  border-color: #bae6fd;
+  box-shadow: var(--shadow-xs);
+}
+
+.profile-row.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+.profile-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.profile-copy strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-copy span {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-copy .active-copy {
+  color: var(--primary);
+  font-weight: 550;
+}
+
+.profile-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.profile-status.live {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgb(14 165 233 / 0.18);
+}
+
+.sidebar-footer {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-footer .ghost-button {
+  flex: 1;
+  justify-content: center;
+  height: 34px;
+  font-size: 12.5px;
+}
