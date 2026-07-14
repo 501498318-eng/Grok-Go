@@ -112,6 +112,20 @@ describe("ProfileService", () => {
     expect(await readFile(configPath, "utf8")).toContain("external");
   });
 
+  it("reports a conflict when a missing config is created before apply", async () => {
+    const { configPath, service } = await fixture();
+    const { mkdir } = await import("node:fs/promises");
+    const snapshot = await service.snapshot();
+    expect(snapshot.configExists).toBe(false);
+
+    await mkdir(path.dirname(configPath), { recursive: true });
+    await writeFile(configPath, '[cli]\ninstaller = "external"\n');
+    const result = await service.apply(profile, { expectedHash: null });
+
+    expect(result.conflict).toBe(true);
+    expect(await readFile(configPath, "utf8")).toContain("external");
+  });
+
   it("validates an OpenAI-compatible model list", async () => {
     const { service } = await fixture();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
