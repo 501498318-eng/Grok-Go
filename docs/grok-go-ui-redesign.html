@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grok Go · Swiss Grid × Light Kraft 设计稿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /*
+      Grok Go v3 — Swiss Grid × Light Kraft
+      ────────────────────────────────────
+      纸色：淡化牛皮纸（参考图 #F5F0E8 一带）
+      色票：IKB / 柠檬黄 / 柠檬绿 / 安全橙
+      瑞士：直角 · hairline · 12 列节奏 · 无渐变无阴影
+      字体：Inter + Noto Sans SC 全程无衬线 · mono 元数据
+    */
+
+    :root {
+      /* Light kraft — washed paper, not heavy cardboard */
+      --paper-0: #faf7f2;
+      --paper-1: #f5f0e8;
+      --paper-2: #efe8dc;
+      --paper-3: #e4dccf;
+      --paper-ink: #14110e;
+      --paper-body: #2a241c;
+      --paper-mute: #7a7164;
+      --paper-faint: #a39888;
+      --line: rgba(20, 17, 14, 0.12);
+      --line-strong: rgba(20, 17, 14, 0.2);
+      --line-grid: rgba(20, 17, 14, 0.06);
+
+      --ikb: #002fa7;
+      --lemon: #ffd500;
+      --lime: #c5e803;
+      --orange: #ff6b35;
+      --on-dark: #ffffff;
+      --on-chip: #0a0a0a;
+
+      --sidebar-w: 272px;
+      --header-h: 56px;
+      --control-h: 40px;
+      --gutter: 16px;
+
+      --font-sans: "Inter", "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", "Cascadia Mono", "SF Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--paper-ink);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.45;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      font-synthesis: none;
+      background: #ece6db;
+    }
+
+    button, input, select, textarea, option {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      letter-spacing: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    button:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    /* Light kraft — very soft fiber, almost cream */
+    .paper {
+      background-color: var(--paper-1);
+      background-image:
+        radial-gradient(ellipse 90% 60% at 100% 0%, rgba(255, 255, 255, 0.55), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 0% 100%, rgba(210, 198, 176, 0.18), transparent 50%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-blend-mode: normal, multiply, multiply;
+    }
+
+    .paper-side {
+      background-color: var(--paper-2);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 0% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.45 0 0 0 0 0.35 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-blend-mode: normal, multiply;
+    }
+
+    /* Swiss stage grid backdrop */
+    .stage {
+      min-height: 100vh;
+      padding: 28px 20px 40px;
+      display: grid;
+      justify-items: center;
+      align-content: start;
+      gap: 22px;
+      background-color: #e8e2d6;
+      background-image:
+        linear-gradient(var(--line-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-grid) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .stage-label {
+      width: min(1440px, 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8a8072;
+    }
+
+    .stage-label strong {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      text-transform: none;
+      color: var(--paper-ink);
+    }
+
+    .window {
+      width: min(1440px, 100%);
+      height: min(900px, calc(100vh - 110px));
+      min-height: 720px;
+      display: grid;
+      grid-template-rows: 30px 1fr;
+      border: 1px solid var(--line-strong);
+      background: var(--paper-1);
+    }
+
+    .titlebar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 12px;
+      background: var(--paper-ink);
+      color: #cfc4b4;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .titlebar .mid {
+      text-align: center;
+      color: #f5f0e8;
+      font-weight: 500;
+    }
+
+    .titlebar .end { text-align: right; color: #7a7164; }
+
+    .traffic { display: flex; gap: 6px; }
+    .traffic i {
+      width: 9px;
+      height: 9px;
+      display: block;
+      background: #5a5248;
+    }
+    .traffic i:nth-child(1) { background: var(--orange); }
+    .traffic i:nth-child(2) { background: var(--lemon); }
+    .traffic i:nth-child(3) { background: var(--lime); }
+
+    /* Shell */
+    .shell {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    }
+
+    /* ════ Sidebar ════ */
+    .sidebar {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      border-right: 1px solid var(--line-strong);
+      position: relative;
+    }
+
+    .sidebar::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--ikb);
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 18px 16px 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      background: var(--ikb);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-copy { min-width: 0; display: grid; gap: 2px; }
+
+    .brand-copy strong {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .brand-copy span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      font-weight: 500;
+    }
+
+    .side-tools {
+      display: grid;
+      grid-template-columns: 1fr 40px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search {
+      position: relative;
+      border-right: 1px solid var(--line);
+    }
+
+    .search svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--paper-faint);
+      pointer-events: none;
+    }
+
+    .search input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px 0 38px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+
+    .search input::placeholder {
+      color: var(--paper-faint);
+      font-family: var(--font-sans);
+    }
+
+    .search input:focus {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .add-btn {
+      height: 44px;
+      display: grid;
+      place-items: center;
+      background: var(--lemon);
+      color: var(--on-chip);
+    }
+
+    .add-btn:hover { filter: brightness(0.97); }
+
+    .profile-list {
+      min-height: 0;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--paper-3) transparent;
+    }
+
+    .profile-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 3px 34px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 14px 13px 17px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .profile-row:hover { background: rgba(255, 255, 255, 0.35); }
+
+    .profile-row .rail {
+      width: 3px;
+      align-self: stretch;
+      background: transparent;
+    }
+
+    .profile-row.selected {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .profile-row.selected .rail { background: var(--ikb); }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: #fff;
+      background: var(--paper-ink);
+    }
+
+    .profile-row:nth-child(1) .avatar { background: var(--ikb); }
+    .profile-row:nth-child(3) .avatar { background: var(--orange); }
+    .profile-row:nth-child(4) .avatar { background: #3d3566; }
+
+    .p-copy { min-width: 0; display: grid; gap: 4px; }
+
+    .p-copy strong {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .p-copy .meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: var(--paper-mute);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* LIVE chip — mono, centered */
+    .live-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 18px;
+      padding: 0 7px;
+      width: fit-content;
+      background: var(--lime);
+      color: var(--on-chip);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .p-meta {
+      display: grid;
+      justify-items: end;
+      gap: 6px;
+    }
+
+    .proto-chip {
+      height: 18px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      border: 1px solid var(--line-strong);
+      color: var(--paper-body);
+      line-height: 1;
+      background: transparent;
+    }
+
+    .side-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .side-foot button {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--paper-body);
+      border-right: 1px solid var(--line);
+    }
+
+    .side-foot button:last-child { border-right: 0; }
+    .side-foot button:hover { background: rgba(255, 255, 255, 0.4); }
+
+    /* ════ Workspace ════ */
+    .workspace {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: var(--header-h) auto minmax(0, 1fr);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .identity h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Status tags — Swiss mono, flex-centered */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 9px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tag-live {
+      background: var(--lime);
+      color: var(--on-chip);
+    }
+
+    .tag-dirty {
+      background: var(--lemon);
+      color: var(--on-chip);
+    }
+
+    .tag-idle {
+      border: 1px solid var(--line-strong);
+      color: var(--paper-mute);
+      background: transparent;
+    }
+
+    .btn {
+      height: 40px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .btn:hover:not(:disabled) { filter: brightness(0.97); }
+
+    .btn-ikb {
+      background: var(--ikb);
+      color: var(--on-dark);
+      border-color: var(--ikb);
+    }
+
+    .btn-line {
+      background: transparent;
+      color: var(--paper-body);
+      border-color: var(--line-strong);
+    }
+
+    .btn-line:hover:not(:disabled) {
+      background: rgba(20, 17, 14, 0.03);
+      filter: none;
+    }
+
+    .btn-orange {
+      background: transparent;
+      color: var(--orange);
+      border-color: var(--orange);
+    }
+
+    .btn-orange:hover:not(:disabled) {
+      background: var(--orange);
+      color: #fff;
+      filter: none;
+    }
+
+    .btn-sm {
+      height: 30px;
+      padding: 0 11px;
+      font-size: 12px;
+    }
+
+    /* Spec bar — 4 equal grid cells */
+    .specbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      border-bottom: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .spec-cell {
+      min-width: 0;
+      padding: 10px 16px;
+      border-right: 1px solid var(--line);
+      display: grid;
+      gap: 4px;
+      align-content: center;
+    }
+
+    .spec-cell label {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .spec-cell strong {
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .spec-cell strong.mono {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0;
+    }
+
+    .spec-status {
+      display: flex;
+      align-items: stretch;
+      border-left: 1px solid var(--line-strong);
+      min-width: 108px;
+    }
+
+    .spec-status span {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      background: var(--lime);
+      color: var(--on-chip);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Body with subtle swiss grid */
+    .body {
+      min-height: 0;
+      overflow: auto;
+      padding: 20px 22px 28px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--paper-3) transparent;
+      background-image:
+        linear-gradient(var(--line-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-grid) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-position: -1px -1px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: var(--gutter);
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: var(--gutter);
+      min-width: 0;
+    }
+
+    /* Panels */
+    .panel {
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .panel-head {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 48px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .panel-index {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ikb);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .panel-head .right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .panel-body {
+      padding: 16px 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .span-2 { grid-column: span 2; }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--paper-body);
+      line-height: 1.2;
+    }
+
+    .req {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    .control { position: relative; }
+
+    .control input,
+    .control select {
+      width: 100%;
+      height: var(--control-h);
+      padding: 0 12px;
+      border: 1px solid var(--line-strong);
+      outline: 0;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--paper-ink);
+      line-height: 1.2;
+    }
+
+    /* Critical: force select + options to app font (Windows native select) */
+    .control select,
+    .control select option,
+    select.model-pick,
+    select.model-pick option {
+      font-family: var(--font-sans) !important;
+      font-size: 13px !important;
+      font-weight: 400;
+      color: var(--paper-ink);
+    }
+
+    .control input.mono {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+    }
+
+    .control input:focus,
+    .control select:focus {
+      border-color: var(--ikb);
+      box-shadow: inset 0 0 0 1px var(--ikb);
+    }
+
+    .control select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+
+    .control select:invalid,
+    .control select.placeholder-like {
+      color: var(--paper-mute);
+    }
+
+    .control .chev {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--paper-faint);
+      pointer-events: none;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .control .eye {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--line-strong);
+      color: var(--paper-mute);
+    }
+
+    .control .eye:hover {
+      background: rgba(20, 17, 14, 0.04);
+      color: var(--paper-ink);
+    }
+
+    .control.has-icon input { padding-right: 48px; }
+
+    /* Protocol grid */
+    .proto {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--line-strong);
+    }
+
+    .proto button {
+      min-height: 62px;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 5px;
+      text-align: left;
+      border-right: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .proto button:last-child { border-right: 0; }
+    .proto button:hover { background: rgba(255, 255, 255, 0.65); }
+
+    .proto button .code {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: lowercase;
+      color: var(--paper-mute);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .proto button .name {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--paper-body);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .proto button.on { background: var(--ikb); }
+    .proto button.on .code,
+    .proto button.on .name { color: #fff; }
+
+    .toggle {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.28);
+      cursor: pointer;
+    }
+
+    .toggle strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      letter-spacing: -0.01em;
+    }
+
+    .toggle em {
+      font-style: normal;
+      font-size: 12px;
+      color: var(--paper-mute);
+      line-height: 1.35;
+    }
+
+    .switch {
+      width: 42px;
+      height: 22px;
+      border: 1px solid var(--line-strong);
+      background: transparent;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .switch i {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: var(--paper-ink);
+    }
+
+    .switch.on {
+      background: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .switch.on i {
+      left: auto;
+      right: 2px;
+      background: var(--on-chip);
+    }
+
+    /* Models */
+    .models {
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .model {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 118px 28px 52px 28px;
+      gap: 8px;
+      align-items: center;
+      padding: 0 10px 0 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .model:last-child { border-bottom: 0; }
+    .model:hover { background: rgba(255, 255, 255, 0.5); }
+
+    .model-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .ctx {
+      height: 28px;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .ctx span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      font-weight: 600;
+      border-right: 1px solid var(--line);
+      line-height: 1;
+      background: rgba(245, 240, 232, 0.6);
+    }
+
+    .ctx input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      padding: 0 6px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      background: transparent;
+      line-height: 1;
+    }
+
+    .cap {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--line-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--paper-faint);
+      font-size: 11px;
+      line-height: 1;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .cap.on {
+      background: var(--lemon);
+      border-color: var(--lemon);
+      color: var(--on-chip);
+    }
+
+    /* 默认 — mono chip, true center */
+    .def {
+      height: 20px;
+      min-width: 44px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: center;
+      background: var(--ikb);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .x {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--paper-faint);
+      font-size: 16px;
+      line-height: 1;
+      font-family: var(--font-mono);
+    }
+
+    .x:hover:not(:disabled) {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .foot-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .foot-row .hint {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--paper-mute);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .foot-row .btns {
+      display: flex;
+    }
+
+    .foot-row .btns .btn + .btn {
+      margin-left: -1px;
+    }
+
+    /* TOML */
+    .toml {
+      position: sticky;
+      top: 0;
+      min-height: 520px;
+      height: calc(100vh - 210px);
+      max-height: 680px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      border: 1px solid var(--paper-ink);
+      background: var(--paper-ink);
+      color: #e8dfd0;
+    }
+
+    .toml-head {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 56px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(245, 240, 232, 0.1);
+    }
+
+    .toml-head .mark {
+      width: 28px;
+      height: 28px;
+      background: var(--lemon);
+      color: var(--on-chip);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .toml-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f5f0e8;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .toml-head p {
+      margin: 3px 0 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8a8072;
+      line-height: 1;
+    }
+
+    .toml-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 36px;
+      padding: 0 12px;
+      border-bottom: 1px solid rgba(245, 240, 232, 0.08);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: #8a8072;
+    }
+
+    .toml-bar .path {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toml-bar button {
+      height: 26px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid rgba(245, 240, 232, 0.2);
+      color: #e8dfd0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .toml-bar button:hover {
+      background: var(--ikb);
+      border-color: var(--ikb);
+      color: #fff;
+    }
+
+    .toml-code {
+      margin: 0;
+      padding: 12px 0;
+      overflow: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: #d9cfbf;
+      scrollbar-width: thin;
+      scrollbar-color: #3d352c transparent;
+    }
+
+    .toml-code .ln {
+      display: grid;
+      grid-template-columns: 36px minmax(max-content, 1fr);
+    }
+
+    .toml-code .n {
+      padding-right: 10px;
+      border-right: 1px solid rgba(245, 240, 232, 0.08);
+      color: #5a5248;
+      text-align: right;
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toml-code .c {
+      padding: 0 12px;
+      white-space: pre;
+    }
+
+    .toml-code .sec .c { color: #9db7ff; }
+    .toml-code .str .c { color: var(--lime); }
+    .toml-code .key .c { color: #e8dfd0; }
+
+    /* Legend */
+    .legend {
+      width: min(1440px, 100%);
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+    }
+
+    .legend-card {
+      border: 1px solid rgba(20, 17, 14, 0.12);
+      background: rgba(255, 252, 247, 0.7);
+      color: var(--paper-mute);
+      padding: 16px 18px;
+    }
+
+    .legend-card h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--paper-ink);
+      letter-spacing: -0.02em;
+    }
+
+    .legend-card ul {
+      margin: 0;
+      padding-left: 16px;
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .legend-card strong { color: var(--paper-body); font-weight: 600; }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .swatch { border: 1px solid var(--line); overflow: hidden; }
+    .swatch .chip-color { height: 28px; }
+    .swatch .chip-meta {
+      padding: 7px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      background: rgba(255, 255, 255, 0.5);
+      line-height: 1.3;
+    }
+    .swatch .chip-meta b {
+      display: block;
+      color: var(--paper-ink);
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      margin-bottom: 2px;
+    }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .toml { position: relative; height: 360px; max-height: none; }
+      .legend { grid-template-columns: 1fr; }
+      .specbar { grid-template-columns: 1fr 1fr; }
+      .spec-status { grid-column: 1 / -1; min-height: 36px; border-left: 0; border-top: 1px solid var(--line); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="stage-label">
+      <strong>Grok Go · 设计稿 v3</strong>
+      <span>Swiss Grid × Light Kraft · #F5F0E8</span>
+    </div>
+
+    <div class="window" role="application" aria-label="Grok Go 设计稿">
+      <div class="titlebar">
+        <div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="mid">Grok Go</div>
+        <div class="end">1.7.0</div>
+      </div>
+
+      <div class="shell">
+        <aside class="sidebar paper-side">
+          <div class="brand">
+            <div class="brand-mark" aria-hidden="true">G</div>
+            <div class="brand-copy">
+              <strong>Grok Go</strong>
+              <span>Provider Switcher</span>
+            </div>
+          </div>
+
+          <div class="side-tools">
+            <label class="search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/>
+              </svg>
+              <input placeholder="搜索供应商…" aria-label="搜索供应商" />
+            </label>
+            <button class="add-btn" type="button" title="新建供应商" aria-label="新建供应商">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="square"/>
+              </svg>
+            </button>
+          </div>
+
+          <nav class="profile-list" aria-label="供应商档案">
+            <button class="profile-row selected" type="button">
+              <span class="rail" aria-hidden="true"></span>
+              <span class="avatar">示</span>
+              <span class="p-copy">
+                <strong>示例供应商</strong>
+                <span class="live-chip">Live</span>
+              </span>
+              <span class="p-meta"><span class="proto-chip">responses</span></span>
+            </button>
+            <button class="profile-row" type="button">
+              <span class="rail" aria-hidden="true"></span>
+              <span class="avatar">官</span>
+              <span class="p-copy">
+                <strong>官方 xAI</strong>
+                <span class="meta">3 天前</span>
+              </span>
+              <span class="p-meta"><span class="proto-chip">responses</span></span>
+            </button>
+            <button class="profile-row" type="button">
+              <span class="rail" aria-hidden="true"></span>
+              <span class="avatar">备</span>
+              <span class="p-copy">
+                <strong>备用节点</strong>
+                <span class="meta">尚未使用</span>
+              </span>
+              <span class="p-meta"><span class="proto-chip">chat</span></span>
+            </button>
+            <button class="profile-row" type="button">
+              <span class="rail" aria-hidden="true"></span>
+              <span class="avatar">本</span>
+              <span class="p-copy">
+                <strong>本地代理</strong>
+                <span class="meta">8787 · filter</span>
+              </span>
+              <span class="p-meta"><span class="proto-chip">messages</span></span>
+            </button>
+          </nav>
+
+          <div class="side-foot">
+            <button type="button">设置</button>
+            <button type="button">关于</button>
+          </div>
+        </aside>
+
+        <main class="workspace paper">
+          <header class="topbar">
+            <div class="identity">
+              <h1>示例供应商</h1>
+              <span class="tag tag-live">当前生效</span>
+            </div>
+            <button class="btn btn-ikb" type="button">应用配置</button>
+          </header>
+
+          <div class="specbar" aria-label="配置规格">
+            <div class="spec-cell">
+              <label>档案</label>
+              <strong>示例供应商</strong>
+            </div>
+            <div class="spec-cell">
+              <label>协议</label>
+              <strong class="mono">responses</strong>
+            </div>
+            <div class="spec-cell">
+              <label>上游</label>
+              <strong class="mono">provider.example.com</strong>
+            </div>
+            <div class="spec-cell">
+              <label>目标</label>
+              <strong class="mono">~/.grok/config.toml</strong>
+            </div>
+            <div class="spec-status"><span>Synced</span></div>
+          </div>
+
+          <div class="body">
+            <div class="layout">
+              <div class="stack">
+                <section class="panel">
+                  <div class="panel-head">
+                    <span class="panel-index">01</span>
+                    <h2>基本信息</h2>
+                    <div class="right">Auth · Protocol</div>
+                  </div>
+                  <div class="panel-body">
+                    <div class="grid-2">
+                      <label class="field">
+                        <span class="field-label">供应商名称 <span class="req">*</span></span>
+                        <span class="control"><input value="示例供应商" /></span>
+                      </label>
+                      <label class="field">
+                        <span class="field-label">Base URL <span class="req">*</span></span>
+                        <span class="control"><input class="mono" value="https://provider.example.com/v1" spellcheck="false" /></span>
+                      </label>
+
+                      <div class="field span-2">
+                        <span class="field-label">接口协议 <span class="req">*</span></span>
+                        <div class="proto" role="radiogroup" aria-label="接口协议">
+                          <button type="button" class="on" role="radio" aria-checked="true">
+                            <span class="code">api_backend</span>
+                            <span class="name">OpenAI Responses</span>
+                          </button>
+                          <button type="button" role="radio" aria-checked="false">
+                            <span class="code">chat_completions</span>
+                            <span class="name">Chat Completions</span>
+                          </button>
+                          <button type="button" role="radio" aria-checked="false">
+                            <span class="code">messages</span>
+                            <span class="name">Anthropic Messages</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <label class="field span-2">
+                        <span class="field-label">API Key <span class="req">*</span></span>
+                        <span class="control has-icon">
+                          <input type="password" value="sk-xxxxxxxxxxxxxxxxxxxx" />
+                          <button class="eye" type="button" aria-label="显示密钥">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                          </button>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="panel">
+                  <div class="panel-head">
+                    <span class="panel-index">02</span>
+                    <h2>已配置模型</h2>
+                    <div class="right">
+                      <span>3 Models</span>
+                      <button class="btn btn-line btn-sm" type="button">测试连接</button>
+                    </div>
+                  </div>
+                  <div class="panel-body">
+                    <div class="control">
+                      <select class="model-pick placeholder-like" aria-label="添加上游模型">
+                        <option selected disabled>测试连接后读取上游模型…</option>
+                        <option>grok-4.5-latest</option>
+                        <option>grok-4.5</option>
+                        <option>grok-build</option>
+                      </select>
+                      <span class="chev">▾</span>
+                    </div>
+                    <div class="models">
+                      <div class="model">
+                        <span class="model-name">grok-4.5-latest</span>
+                        <label class="ctx"><span>ctx</span><input value="500000" /></label>
+                        <button class="cap on" type="button" title="图片能力" aria-label="图片能力已开启">▣</button>
+                        <span class="def">默认</span>
+                        <button class="x" type="button" disabled aria-label="移除">×</button>
+                      </div>
+                      <div class="model">
+                        <span class="model-name">grok-4.5</span>
+                        <label class="ctx"><span>ctx</span><input value="500000" /></label>
+                        <button class="cap" type="button" title="图片能力" aria-label="图片能力">▣</button>
+                        <span></span>
+                        <button class="x" type="button" aria-label="移除">×</button>
+                      </div>
+                      <div class="model">
+                        <span class="model-name">grok-build</span>
+                        <label class="ctx"><span>ctx</span><input value="500000" /></label>
+                        <button class="cap" type="button" title="图片能力" aria-label="图片能力">▣</button>
+                        <span></span>
+                        <button class="x" type="button" aria-label="移除">×</button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="panel">
+                  <div class="panel-head">
+                    <span class="panel-index">03</span>
+                    <h2>高级选项</h2>
+                    <div class="right">Proxy · Filter</div>
+                  </div>
+                  <div class="panel-body">
+                    <label class="toggle">
+                      <span>
+                        <strong>过滤不兼容的 thinking</strong>
+                        <em>本机 127.0.0.1:8787 转发，修复缺 signature 的工具调用</em>
+                      </span>
+                      <span class="switch" aria-hidden="true"><i></i></span>
+                    </label>
+                  </div>
+                </section>
+
+                <div class="foot-row">
+                  <span class="hint">Backup · config.toml.bak</span>
+                  <div class="btns">
+                    <button class="btn btn-line btn-sm" type="button">恢复备份</button>
+                    <button class="btn btn-orange btn-sm" type="button">删除档案</button>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="toml" aria-label="config.toml 预览">
+                <div class="toml-head">
+                  <span class="mark">T</span>
+                  <div>
+                    <h2>config.toml</h2>
+                    <p>Live preview</p>
+                  </div>
+                </div>
+                <div class="toml-bar">
+                  <span class="path">C:\Users\example\.grok\config.toml</span>
+                  <button type="button">Copy</button>
+                </div>
+                <pre class="toml-code"><span class="ln sec"><span class="n">1</span><span class="c">[endpoints]</span></span>
+<span class="ln str"><span class="n">2</span><span class="c">models_base_url = "https://provider.example.com/v1"</span></span>
+<span class="ln str"><span class="n">3</span><span class="c">xai_api_base_url = "https://provider.example.com/v1"</span></span>
+<span class="ln"><span class="n">4</span><span class="c"></span></span>
+<span class="ln sec"><span class="n">5</span><span class="c">[models]</span></span>
+<span class="ln str"><span class="n">6</span><span class="c">default = "grok-4.5-latest"</span></span>
+<span class="ln"><span class="n">7</span><span class="c"></span></span>
+<span class="ln sec"><span class="n">8</span><span class="c">[model."grok-4.5-latest"]</span></span>
+<span class="ln key"><span class="n">9</span><span class="c">model = "grok-4.5-latest"</span></span>
+<span class="ln str"><span class="n">10</span><span class="c">base_url = "https://provider.example.com/v1"</span></span>
+<span class="ln key"><span class="n">11</span><span class="c">api_backend = "responses"</span></span>
+<span class="ln key"><span class="n">12</span><span class="c">context_window = 500000</span></span>
+<span class="ln str"><span class="n">13</span><span class="c">api_key = "••••••••••••"</span></span>
+<span class="ln key"><span class="n">14</span><span class="c">input_modalities = ["text", "image"]</span></span>
+<span class="ln key"><span class="n">15</span><span class="c">supports_image_detail_original = true</span></span>
+<span class="ln"><span class="n">16</span><span class="c"></span></span>
+<span class="ln sec"><span class="n">17</span><span class="c">[model."grok-4.5"]</span></span>
+<span class="ln key"><span class="n">18</span><span class="c">model = "grok-4.5"</span></span>
+<span class="ln str"><span class="n">19</span><span class="c">base_url = "https://provider.example.com/v1"</span></span>
+<span class="ln key"><span class="n">20</span><span class="c">api_backend = "responses"</span></span>
+<span class="ln key"><span class="n">21</span><span class="c">context_window = 500000</span></span>
+<span class="ln str"><span class="n">22</span><span class="c">api_key = "••••••••••••"</span></span></pre>
+              </aside>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-card">
+        <h3>v3 调整</h3>
+        <ul>
+          <li><strong>纸色减淡</strong>：对齐参考图浅奶油 `#F5F0E8`，去掉厚重棕卡纸感</li>
+          <li><strong>瑞士网格</strong>：舞台/正文 24–32px 点阵底、等分规格栏、直角 hairline 面板</li>
+          <li><strong>全程无衬线</strong>：Inter + Noto Sans SC；元数据用 IBM Plex Mono 大写</li>
+          <li><strong>下拉字体</strong>：`select` / `option` 强制应用字体，占位文案用 muted 色</li>
+          <li><strong>标签居中</strong>：「当前生效」「默认」「Synced」「Live」均为 mono + flex 居中</li>
+        </ul>
+      </div>
+      <div class="legend-card">
+        <h3>色票</h3>
+        <div class="swatches">
+          <div class="swatch">
+            <div class="chip-color" style="background:#002FA7"></div>
+            <div class="chip-meta"><b>IKB</b>#002FA7</div>
+          </div>
+          <div class="swatch">
+            <div class="chip-color" style="background:#FFD500"></div>
+            <div class="chip-meta"><b>柠檬黄</b>#FFD500</div>
+          </div>
+          <div class="swatch">
+            <div class="chip-color" style="background:#C5E803"></div>
+            <div class="chip-meta"><b>柠檬绿</b>#C5E803</div>
+          </div>
+          <div class="swatch">
+            <div class="chip-color" style="background:#FF6B35"></div>
+            <div class="chip-meta"><b>安全橙</b>#FF6B35</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

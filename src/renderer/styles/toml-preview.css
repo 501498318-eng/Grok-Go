@@ -3,60 +3,80 @@
 .toml-side-panel {
   position: sticky;
   top: 0;
-  height: calc(100vh - var(--header-h) - 64px);
+  height: calc(100vh - var(--titlebar-h) - var(--header-h) - var(--spec-h) - 48px);
   min-height: 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   overflow: hidden;
-  border: 1px solid #1e293b;
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--text);
+  border-radius: 0;
   background: var(--bg-code);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .toml-side-head {
   min-width: 0;
-  min-height: 62px;
-  padding: 11px 14px;
-  display: flex;
+  min-height: 56px;
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
   align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid #1e293b;
+  gap: 12px;
+  border-bottom: 1px solid rgba(245, 240, 232, 0.1);
 }
 
-.toml-side-head .section-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
+.toml-side-head .section-icon,
+.toml-side-head .section-icon.dark {
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  background: #1e293b;
-  color: #7dd3fc;
+  background: var(--lemon);
+  color: var(--on-chip);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.toml-side-head .section-icon svg {
+  display: none;
 }
 
 .toml-side-head h2 {
   margin: 0;
-  color: #f8fafc;
-  font-size: 13.5px;
-  font-weight: 650;
+  color: #f5f0e8;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .toml-side-head p {
-  margin: 2px 0 0;
-  color: #64748b;
-  font-size: 11.5px;
+  margin: 3px 0 0;
+  color: #8a8072;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .toml-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #1e293b;
-  color: #94a3b8;
-  font-size: 12px;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(245, 240, 232, 0.08);
+  color: #8a8072;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
 }
 
 .toml-toolbar > span {
@@ -67,16 +87,21 @@
 }
 
 .toml-toolbar .secondary-button {
-  background: #1e293b;
-  border-color: #334155;
-  color: #e2e8f0;
-  height: 28px;
-  font-size: 12px;
+  background: transparent;
+  border-color: rgba(245, 240, 232, 0.2);
+  color: #e8dfd0;
+  height: 26px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: none;
 }
 
 .toml-toolbar .secondary-button:hover:not(:disabled) {
-  background: #334155;
-  border-color: #475569;
+  background: var(--ikb);
+  border-color: var(--ikb);
+  color: #fff;
 }
 
 .toml-preview {
@@ -84,23 +109,23 @@
   margin: 0;
   padding: 12px 0;
   overflow: auto;
-  font-family: Consolas, "Cascadia Mono", "SF Mono", ui-monospace, monospace;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   line-height: 1.7;
-  color: var(--text-code);
+  color: #d9cfbf;
   scrollbar-width: thin;
-  scrollbar-color: #475569 transparent;
+  scrollbar-color: #3d352c transparent;
 }
 
 .toml-preview span {
   display: grid;
-  grid-template-columns: 44px minmax(max-content, 1fr);
+  grid-template-columns: 36px minmax(max-content, 1fr);
 }
 
 .toml-preview i {
-  padding-right: 12px;
-  border-right: 1px solid #1e293b;
-  color: #475569;
+  padding-right: 10px;
+  border-right: 1px solid rgba(245, 240, 232, 0.08);
+  color: #5a5248;
   text-align: right;
   font-style: normal;
   user-select: none;
@@ -108,10 +133,10 @@
 }
 
 .toml-preview code {
-  padding: 0 14px;
+  padding: 0 12px;
   white-space: pre;
 }
 
-.toml-preview .toml-section code { color: #7dd3fc; }
-.toml-preview .toml-key code { color: #e2e8f0; }
-.toml-preview .toml-string code { color: #86efac; }
+.toml-preview .toml-section code { color: #9db7ff; }
+.toml-preview .toml-key code { color: #e8dfd0; }
+.toml-preview .toml-string code { color: var(--lime); }

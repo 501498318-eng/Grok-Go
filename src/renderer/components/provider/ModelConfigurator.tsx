@@ -1,17 +1,26 @@
-import { ChevronDown, X } from "lucide-react";
+import { BrainCircuit, ChevronDown, X } from "lucide-react";
+import { defaultConfiguredModelSettings } from "../../../shared/model-settings";
+import type { ConfiguredModelSettings } from "../../../shared/types";
 
 export function ModelConfigurator({
   availableModels,
   defaultModel,
   configuredModels,
+  modelSettings,
   onAdd,
   onRemove,
+  onUpdateSettings,
 }: {
   availableModels: string[];
   defaultModel: string;
   configuredModels: string[];
+  modelSettings: Record<string, ConfiguredModelSettings>;
   onAdd: (modelId: string) => void;
   onRemove: (modelId: string) => void;
+  onUpdateSettings: (
+    modelId: string,
+    patch: Partial<ConfiguredModelSettings>,
+  ) => void;
 }) {
   const selected = new Set(configuredModels);
   const addable = availableModels.filter((modelId) => !selected.has(modelId));
@@ -48,10 +57,61 @@ export function ModelConfigurator({
         ) : (
           configuredModels.map((modelId) => {
             const isDefault = modelId === defaultModel;
+            const settings =
+              modelSettings[modelId] ?? defaultConfiguredModelSettings(modelId);
             return (
               <div className="configured-model-row" key={modelId}>
-                <span className="configured-model-name">{modelId}</span>
-                {isDefault ? <span className="default-model-label">默认</span> : <span />}
+                <span className="configured-model-name" title={modelId}>{modelId}</span>
+                <label
+                  className="model-context-control"
+                  title={`${modelId} 的上下文窗口`}
+                >
+                  <span>ctx</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1000"
+                    value={settings.contextWindow}
+                    aria-label={`${modelId} 上下文窗口`}
+                    onChange={(event) =>
+                      onUpdateSettings(modelId, {
+                        contextWindow: Number(event.target.value),
+                      })
+                    }
+                    onBlur={() => {
+                      if (settings.contextWindow <= 0) {
+                        onUpdateSettings(
+                          modelId,
+                          {
+                            contextWindow:
+                              defaultConfiguredModelSettings(modelId).contextWindow,
+                          },
+                        );
+                      }
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className={`model-capability-toggle ${settings.supportsReasoningEffort ? "active" : ""}`}
+                  aria-pressed={settings.supportsReasoningEffort}
+                  aria-label={`${modelId} 推理强度支持`}
+                  title={
+                    settings.supportsReasoningEffort
+                      ? "已声明支持推理强度；点击关闭"
+                      : "声明此模型支持 reasoning effort（仅在上游实际支持时开启）"
+                  }
+                  onClick={() =>
+                    onUpdateSettings(modelId, {
+                      supportsReasoningEffort: !settings.supportsReasoningEffort,
+                    })
+                  }
+                >
+                  <BrainCircuit size={15} />
+                </button>
+                <span className="default-model-slot">
+                  {isDefault ? <span className="default-model-label">默认</span> : null}
+                </span>
                 <button
                   type="button"
                   className="model-remove-button"

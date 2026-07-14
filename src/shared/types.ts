@@ -1,5 +1,10 @@
 export type ApiProtocol = "openai-responses" | "openai-chat" | "anthropic";
 
+export interface ConfiguredModelSettings {
+  contextWindow: number;
+  supportsReasoningEffort: boolean;
+}
+
 export interface ProviderProfile {
   id: string;
   name: string;
@@ -9,8 +14,11 @@ export interface ProviderProfile {
   compatibilityProxy?: boolean;
   defaultModel: string;
   configuredModels: string[];
+  modelSettings: Record<string, ConfiguredModelSettings>;
+  /** Legacy profile field retained for schemaVersion 1 migration. */
   contextWindow?: number;
-  imageSupport: boolean;
+  /** Legacy field; Grok Build 0.2.101 no longer accepts its TOML overrides. */
+  imageSupport?: boolean;
   lastValidatedAt?: string;
   lastUsedAt?: string;
 }

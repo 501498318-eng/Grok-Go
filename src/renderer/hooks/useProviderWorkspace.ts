@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AppSnapshot, ProviderProfile } from "../../shared/types";
+import { defaultConfiguredModelSettings } from "../../shared/model-settings";
+import type {
+  AppSnapshot,
+  ConfiguredModelSettings,
+  ProviderProfile,
+} from "../../shared/types";
 import {
   blankProfile,
+  cloneProfile,
   tomlPreview,
 } from "../lib/profile-utils";
 import type { BusyAction, ProfileUpdater } from "../types";
@@ -29,7 +35,7 @@ export function useProviderWorkspace() {
         next.profiles.find((profile) => profile.id === id) ?? next.profiles[0];
       if (selected) {
         setSelectedId(selected.id);
-        setDraft({ ...selected, configuredModels: [...selected.configuredModels] });
+        setDraft(cloneProfile(selected));
       }
     },
     [selectedId],
@@ -92,7 +98,17 @@ export function useProviderWorkspace() {
             .filter(Boolean),
         ),
       ];
-      return { ...current, defaultModel, configuredModels };
+      return {
+        ...current,
+        defaultModel,
+        configuredModels,
+        modelSettings: {
+          ...current.modelSettings,
+          ...(defaultModel && !current.modelSettings[defaultModel]
+            ? { [defaultModel]: defaultConfiguredModelSettings(defaultModel) }
+            : {}),
+        },
+      };
     });
   };
 
@@ -104,6 +120,12 @@ export function useProviderWorkspace() {
         ? {
             ...current,
             configuredModels: [...new Set([...current.configuredModels, normalized])],
+            modelSettings: {
+              ...current.modelSettings,
+              [normalized]:
+                current.modelSettings[normalized] ??
+                defaultConfiguredModelSettings(normalized),
+            },
           }
         : current,
     );
@@ -112,9 +134,32 @@ export function useProviderWorkspace() {
   const removeConfiguredModel = (modelId: string) => {
     setDraft((current) => {
       if (!current || current.defaultModel === modelId) return current;
+      const modelSettings = { ...current.modelSettings };
+      delete modelSettings[modelId];
       return {
         ...current,
         configuredModels: current.configuredModels.filter((item) => item !== modelId),
+        modelSettings,
+      };
+    });
+  };
+
+  const updateConfiguredModelSettings = (
+    modelId: string,
+    patch: Partial<ConfiguredModelSettings>,
+  ) => {
+    setDraft((current) => {
+      if (!current || !current.configuredModels.includes(modelId)) return current;
+      return {
+        ...current,
+        modelSettings: {
+          ...current.modelSettings,
+          [modelId]: {
+            ...defaultConfiguredModelSettings(modelId),
+            ...current.modelSettings[modelId],
+            ...patch,
+          },
+        },
       };
     });
   };
@@ -124,7 +169,7 @@ export function useProviderWorkspace() {
     const selected = snapshot?.profiles.find((profile) => profile.id === id);
     if (!selected) return;
     setSelectedId(id);
-    setDraft({ ...selected, configuredModels: [...selected.configuredModels] });
+    setDraft(cloneProfile(selected));
     connection.reset();
     setError("");
   };
@@ -242,6 +287,7 @@ export function useProviderWorkspace() {
     updateDefaultModel,
     addConfiguredModel,
     removeConfiguredModel,
+    updateConfiguredModelSettings,
     selectProfile,
     addProfile,
     testConnection: connection.testConnection,

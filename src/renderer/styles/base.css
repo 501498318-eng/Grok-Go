@@ -1,64 +1,81 @@
 :root {
-  /* Surfaces */
-  --bg-app: #f1f5f9;
-  --bg-surface: #ffffff;
-  --bg-sidebar: #f8fafc;
-  --bg-muted: #f1f5f9;
-  --bg-code: #0f172a;
+  /* Light kraft paper */
+  --paper-0: #faf7f2;
+  --paper-1: #f5f0e8;
+  --paper-2: #efe8dc;
+  --paper-3: #e4dccf;
+  --bg-app: var(--paper-1);
+  --bg-surface: rgba(255, 255, 255, 0.42);
+  --bg-sidebar: var(--paper-2);
+  --bg-muted: rgba(255, 255, 255, 0.35);
+  --bg-code: #14110e;
 
-  /* Borders */
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-focus: #38bdf8;
+  /* Borders / grid */
+  --border: rgba(20, 17, 14, 0.12);
+  --border-strong: rgba(20, 17, 14, 0.2);
+  --border-focus: #002fa7;
+  --line-grid: rgba(20, 17, 14, 0.06);
 
-  /* Text */
-  --text: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
+  /* Text on kraft */
+  --text: #14110e;
+  --text-secondary: #2a241c;
+  --text-muted: #7a7164;
+  --text-faint: #a39888;
   --text-on-primary: #ffffff;
-  --text-code: #e2e8f0;
+  --text-code: #e8dfd0;
 
-  /* Accent — electric sky */
-  --primary: #0ea5e9;
-  --primary-hover: #0284c7;
-  --primary-soft: #e0f2fe;
-  --primary-ring: rgba(14, 165, 233, 0.18);
+  /* Swiss chips */
+  --ikb: #002fa7;
+  --lemon: #ffd500;
+  --lime: #c5e803;
+  --orange: #ff6b35;
+  --on-chip: #0a0a0a;
 
-  /* Semantic */
-  --success: #059669;
-  --success-soft: #ecfdf5;
-  --success-border: #a7f3d0;
-  --warning: #d97706;
-  --warning-soft: #fffbeb;
-  --warning-border: #fde68a;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --danger-border: #fecaca;
+  --primary: var(--ikb);
+  --primary-hover: #00268a;
+  --primary-soft: rgba(0, 47, 167, 0.08);
+  --primary-ring: rgba(0, 47, 167, 0.18);
 
-  /* Geometry */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --sidebar-w: 268px;
+  --success: #0a7a3e;
+  --success-soft: rgba(197, 232, 3, 0.28);
+  --success-border: rgba(10, 122, 62, 0.25);
+  --warning: #8a6a00;
+  --warning-soft: rgba(255, 213, 0, 0.35);
+  --warning-border: rgba(138, 106, 0, 0.28);
+  --danger: var(--orange);
+  --danger-soft: rgba(255, 107, 53, 0.12);
+  --danger-border: rgba(255, 107, 53, 0.35);
+
+  /* Geometry — Swiss: square corners */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --sidebar-w: 272px;
   --control-h: 40px;
-  --header-h: 60px;
+  --header-h: 56px;
+  --spec-h: 52px;
+  /* Must match BrowserWindow titleBarOverlay.height */
+  --titlebar-h: 36px;
 
-  /* Elevation */
-  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
-  --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
-  --shadow-md: 0 8px 24px rgb(15 23 42 / 0.1), 0 2px 6px rgb(15 23 42 / 0.05);
-  --shadow-toast: 0 12px 32px rgb(15 23 42 / 0.14);
+  /* No soft elevation */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-toast: 0 8px 24px rgba(20, 17, 14, 0.12);
 
-  /* Motion */
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur: 150ms;
+  --ease: linear;
+  --dur: 100ms;
 
-  font-family: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif;
+  /* Magazine serif display + UI sans + mono data */
+  --font-serif: "Noto Serif SC", "Source Serif 4", "Songti SC", "SimSun", serif;
+  --font-sans: "Segoe UI", "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "IBM Plex Mono", "SF Mono", Consolas, ui-monospace, monospace;
+
+  font-family: var(--font-sans);
   color: var(--text);
   background: var(--bg-app);
   font-synthesis: none;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
@@ -70,11 +87,18 @@ body {
   min-width: 1180px;
   min-height: 720px;
   overflow: hidden;
-  background: var(--bg-app);
+  color: var(--text);
+  background-color: var(--paper-1);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(210, 198, 176, 0.18), transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-blend-mode: normal, multiply, multiply;
 }
 
-button, input, select, textarea {
-  font: inherit;
+button, input, select, textarea, option {
+  font-family: inherit;
+  font-size: inherit;
   letter-spacing: 0;
   color: inherit;
 }
@@ -86,6 +110,12 @@ button {
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.38;
   cursor: not-allowed;
+}
+
+select,
+select option {
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
 }

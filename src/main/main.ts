@@ -22,10 +22,17 @@ function createWindow(): BrowserWindow {
     height: 900,
     minWidth: 1180,
     minHeight: 720,
-    backgroundColor: "#ffffff",
+    // Match light kraft paper so native chrome does not flash white/blue
+    backgroundColor: "#f5f0e8",
     icon: path.join(app.getAppPath(), "assets", "icon.png"),
     title: "Grok Go",
     autoHideMenuBar: true,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#f5f0e8",
+      symbolColor: "#14110e",
+      height: 36,
+    },
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.cjs"),
       contextIsolation: true,

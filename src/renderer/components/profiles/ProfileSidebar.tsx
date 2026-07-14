@@ -1,6 +1,10 @@
 import { CircleHelp, Plus, Search, Settings } from "lucide-react";
 import type { AppSnapshot, ProviderProfile } from "../../../shared/types";
-import { formatDate, PROFILE_COLORS } from "../../lib/profile-utils";
+import {
+  formatDate,
+  PROFILE_COLORS,
+  protocolCode,
+} from "../../lib/profile-utils";
 
 export function ProfileSidebar({
   snapshot,
@@ -27,7 +31,7 @@ export function ProfileSidebar({
         <img className="brand-mark" src="./icon.png" alt="" />
         <div className="brand-copy">
           <strong>Grok Go</strong>
-          <span>第三方供应商档案</span>
+          <span>Provider Switcher</span>
         </div>
       </div>
 
@@ -53,9 +57,7 @@ export function ProfileSidebar({
 
       <nav className="profile-list" aria-label="供应商档案">
         {profiles.length === 0 ? (
-          <div className="configured-model-empty" style={{ borderRadius: 8 }}>
-            没有匹配的供应商
-          </div>
+          <div className="configured-model-empty">没有匹配的供应商</div>
         ) : (
           profiles.map((profile) => {
             const index = snapshot.profiles.findIndex((item) => item.id === profile.id);
@@ -68,23 +70,29 @@ export function ProfileSidebar({
                 className={`profile-row ${selected ? "selected" : ""}`}
                 onClick={() => onSelect(profile.id)}
               >
+                <span className="profile-rail" aria-hidden="true" />
                 <span
                   className="profile-avatar"
                   style={{
-                    background: PROFILE_COLORS[Math.max(0, index) % PROFILE_COLORS.length],
+                    background:
+                      PROFILE_COLORS[Math.max(0, index) % PROFILE_COLORS.length],
                   }}
                 >
                   {profile.name.trim().slice(0, 1).toUpperCase() || "?"}
                 </span>
                 <span className="profile-copy">
                   <strong>{profile.name}</strong>
-                  <span className={active ? "active-copy" : ""}>
-                    {active
-                      ? "当前生效"
-                      : `上次使用：${formatDate(profile.lastUsedAt)}`}
-                  </span>
+                  {active ? (
+                    <span className="live-chip">Live</span>
+                  ) : (
+                    <span className="profile-meta-text">
+                      {formatDate(profile.lastUsedAt)}
+                    </span>
+                  )}
                 </span>
-                <span className={`profile-status ${active ? "live" : ""}`} />
+                <span className="profile-meta">
+                  <span className="proto-chip">{protocolCode(profile.protocol)}</span>
+                </span>
               </button>
             );
           })
@@ -100,7 +108,7 @@ export function ProfileSidebar({
           className="ghost-button"
           onClick={() =>
             window.alert(
-              "Grok Go v1.6.2\n轻量切换 Grok Build 的第三方供应商配置。",
+              "Grok Go v1.7.0\n轻量切换 Grok Build 的第三方供应商配置。",
             )
           }
         >

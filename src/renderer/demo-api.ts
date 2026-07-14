@@ -4,6 +4,7 @@ import type {
   ProfileStore,
   ProviderProfile,
 } from "../shared/types";
+import { defaultConfiguredModelSettings } from "../shared/model-settings";
 
 const now = new Date().toISOString();
 const seed: ProviderProfile[] = [
@@ -16,8 +17,11 @@ const seed: ProviderProfile[] = [
     compatibilityProxy: false,
     defaultModel: "grok-4.5-latest",
     configuredModels: ["grok-4.5-latest", "grok-4.5", "grok-build"],
-    contextWindow: 500000,
-    imageSupport: true,
+    modelSettings: {
+      "grok-4.5-latest": { contextWindow: 500000, supportsReasoningEffort: true },
+      "grok-4.5": { contextWindow: 500000, supportsReasoningEffort: true },
+      "grok-build": { contextWindow: 200000, supportsReasoningEffort: false },
+    },
     lastValidatedAt: now,
     lastUsedAt: now,
   },
@@ -30,8 +34,9 @@ const seed: ProviderProfile[] = [
     compatibilityProxy: false,
     defaultModel: "grok-4",
     configuredModels: ["grok-4"],
-    contextWindow: 256000,
-    imageSupport: true,
+    modelSettings: {
+      "grok-4": { contextWindow: 200000, supportsReasoningEffort: false },
+    },
   },
   {
     id: "backup",
@@ -42,7 +47,9 @@ const seed: ProviderProfile[] = [
     compatibilityProxy: true,
     defaultModel: "grok-4.5",
     configuredModels: ["grok-4.5"],
-    imageSupport: true,
+    modelSettings: {
+      "grok-4.5": { contextWindow: 500000, supportsReasoningEffort: true },
+    },
   },
   {
     id: "local",
@@ -53,7 +60,9 @@ const seed: ProviderProfile[] = [
     compatibilityProxy: false,
     defaultModel: "grok-local",
     configuredModels: ["grok-local"],
-    imageSupport: false,
+    modelSettings: {
+      "grok-local": { contextWindow: 200000, supportsReasoningEffort: false },
+    },
   },
 ];
 
@@ -67,9 +76,11 @@ let store: ProfileStore = {
 const configFor = (profile: ProviderProfile) => {
   const modelIds = [...new Set([profile.defaultModel, ...profile.configuredModels])];
   const backend = profile.protocol === "anthropic" ? "messages" : profile.protocol === "openai-chat" ? "chat_completions" : "responses";
-  const modelTables = modelIds.map((modelId) =>
-    `[model."${modelId}"]\nmodel = "${modelId}"\nbase_url = "${profile.compatibilityProxy ? "http://127.0.0.1:8787/v1" : profile.baseUrl}"\napi_backend = "${backend}"\ncontext_window = ${profile.contextWindow ?? 256000}\napi_key = "${profile.apiKey}"${modelId === profile.defaultModel && profile.imageSupport ? '\ninput_modalities = ["text", "image"]\nsupports_image_detail_original = true' : ""}`,
-  );
+  const modelTables = modelIds.map((modelId) => {
+    const settings =
+      profile.modelSettings[modelId] ?? defaultConfiguredModelSettings(modelId);
+    return `[model."${modelId}"]\nmodel = "${modelId}"\nbase_url = "${profile.compatibilityProxy ? "http://127.0.0.1:8787/v1" : profile.baseUrl}"\napi_backend = "${backend}"\ncontext_window = ${settings.contextWindow}\nsupports_reasoning_effort = ${settings.supportsReasoningEffort}\napi_key = "${profile.apiKey}"`;
+  });
   const endpoints = profile.protocol === "anthropic" ? "" : `[endpoints]\nmodels_base_url = "${profile.baseUrl}"\nxai_api_base_url = "${profile.baseUrl}"\n\n`;
   return `${endpoints}[models]\ndefault = "${profile.defaultModel}"\n\n${modelTables.join("\n\n")}\n`;
 };

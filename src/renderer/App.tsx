@@ -2,6 +2,7 @@ import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { ConnectionDiagnostic } from "./components/diagnostics/ConnectionDiagnostic";
 import { ProfileSidebar } from "./components/profiles/ProfileSidebar";
 import { ProviderEditor } from "./components/provider/ProviderEditor";
+import { SpecBar } from "./components/provider/SpecBar";
 import { WorkspaceHeader } from "./components/provider/WorkspaceHeader";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useProviderWorkspace } from "./hooks/useProviderWorkspace";
@@ -21,6 +22,9 @@ export function App() {
   const { snapshot, draft } = workspace;
   return (
     <div className="app-shell">
+      <div className="app-titlebar-drag" aria-hidden="true">
+        <span>Grok Go</span>
+      </div>
       <ProfileSidebar
         snapshot={snapshot}
         profiles={workspace.filteredProfiles}
@@ -40,6 +44,12 @@ export function App() {
           busy={workspace.busy}
           onApply={workspace.apply}
         />
+        <SpecBar
+          draft={draft}
+          snapshot={snapshot}
+          isActive={workspace.isActive}
+          dirty={workspace.dirty}
+        />
         <ProviderEditor
           snapshot={snapshot}
           draft={draft}
@@ -53,6 +63,7 @@ export function App() {
           onUpdateDefaultModel={workspace.updateDefaultModel}
           onAddConfiguredModel={workspace.addConfiguredModel}
           onRemoveConfiguredModel={workspace.removeConfiguredModel}
+          onUpdateConfiguredModelSettings={workspace.updateConfiguredModelSettings}
           onTestConnection={workspace.testConnection}
           onRemove={workspace.remove}
           onRestore={workspace.restore}

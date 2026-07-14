@@ -1,6 +1,7 @@
-import { Eye, EyeOff, Server } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import type { ProviderProfile } from "../../../shared/types";
 import type { ProfileUpdater } from "../../types";
+import { protocolBackendLabel } from "../../lib/profile-utils";
 import { Field } from "../ui/Field";
 
 const PROTOCOL_OPTIONS: Array<{
@@ -26,11 +27,11 @@ export function BasicInfoSection({
   return (
     <section className="form-section">
       <div className="form-section-head">
-        <span className="section-icon">
-          <Server size={15} />
+        <span className="section-icon panel-index" aria-hidden="true">
+          01
         </span>
         <h2>基本信息</h2>
-        <p>供应商接入地址与鉴权</p>
+        <p>Auth · Protocol</p>
       </div>
       <div className="form-section-body">
         <div className="form-grid">
@@ -63,7 +64,10 @@ export function BasicInfoSection({
                   className={`protocol-option ${draft.protocol === option.value ? "active" : ""}`}
                   onClick={() => onUpdate("protocol", option.value)}
                 >
-                  {option.label}
+                  <span className="protocol-code">
+                    {protocolBackendLabel(option.value)}
+                  </span>
+                  <span className="protocol-name">{option.label}</span>
                 </button>
               ))}
             </div>

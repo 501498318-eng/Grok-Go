@@ -93,8 +93,7 @@ export class ProfileService {
           compatibilityProxy: false,
           defaultModel: "",
           configuredModels: [],
-          contextWindow: 256000,
-          imageSupport: true,
+          modelSettings: {},
         });
       }
       await this.writeStore(store);

@@ -5,5 +5,37 @@
   min-height: 720px;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-  background: var(--bg-app);
+  grid-template-rows: var(--titlebar-h) minmax(0, 1fr);
+  background: transparent;
+  padding-top: 0;
+}
+
+/* Full-width drag strip under Windows titleBarOverlay */
+.app-titlebar-drag {
+  grid-column: 1 / -1;
+  height: var(--titlebar-h);
+  background: var(--paper-1);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Reserve space for OS window controls (min/max/close) */
+  padding-right: 140px;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.app-titlebar-drag span {
+  opacity: 0.85;
+}
+
+.app-shell > .sidebar,
+.app-shell > .workspace {
+  min-height: 0;
+  height: 100%;
 }

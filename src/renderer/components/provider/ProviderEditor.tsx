@@ -1,5 +1,9 @@
 import { AlertTriangle, LoaderCircle, RotateCcw, Trash2 } from "lucide-react";
-import type { AppSnapshot, ProviderProfile } from "../../../shared/types";
+import type {
+  AppSnapshot,
+  ConfiguredModelSettings,
+  ProviderProfile,
+} from "../../../shared/types";
 import type { BusyAction, ProfileUpdater } from "../../types";
 import { TomlPreview } from "../config/TomlPreview";
 import { BasicInfoSection } from "./BasicInfoSection";
@@ -19,6 +23,7 @@ export function ProviderEditor({
   onUpdateDefaultModel,
   onAddConfiguredModel,
   onRemoveConfiguredModel,
+  onUpdateConfiguredModelSettings,
   onTestConnection,
   onRemove,
   onRestore,
@@ -36,6 +41,10 @@ export function ProviderEditor({
   onUpdateDefaultModel: (modelId: string) => void;
   onAddConfiguredModel: (modelId: string) => void;
   onRemoveConfiguredModel: (modelId: string) => void;
+  onUpdateConfiguredModelSettings: (
+    modelId: string,
+    patch: Partial<ConfiguredModelSettings>,
+  ) => void;
   onTestConnection: () => void;
   onRemove: () => void;
   onRestore: () => void;
@@ -53,7 +62,6 @@ export function ProviderEditor({
           />
           <ModelPreferencesSection
             draft={draft}
-            onUpdate={onUpdate}
             onUpdateDefaultModel={onUpdateDefaultModel}
           />
           <ConfiguredModelsSection
@@ -63,6 +71,7 @@ export function ProviderEditor({
             onTestConnection={onTestConnection}
             onAdd={onAddConfiguredModel}
             onRemove={onRemoveConfiguredModel}
+            onUpdateSettings={onUpdateConfiguredModelSettings}
           />
 
           {error ? (
@@ -73,16 +82,7 @@ export function ProviderEditor({
           ) : null}
 
           <div className="editor-meta-row">
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                className="secondary-button danger-button compact-button"
-                onClick={onRemove}
-                disabled={!snapshot.profiles.some((item) => item.id === draft.id)}
-                title="删除当前供应商"
-              >
-                <Trash2 size={14} />
-                删除
-              </button>
+            <div>
               <button
                 className="secondary-button compact-button"
                 onClick={onRestore}
@@ -95,9 +95,22 @@ export function ProviderEditor({
                 )}
                 恢复备份
               </button>
+              <button
+                className="secondary-button danger-button compact-button"
+                onClick={onRemove}
+                disabled={!snapshot.profiles.some((item) => item.id === draft.id)}
+                title="删除当前供应商"
+              >
+                <Trash2 size={14} />
+                删除档案
+              </button>
             </div>
             <div className="backup-status">
-              <span>{snapshot.backupExists ? "已有备份" : "暂无备份"}</span>
+              <span>
+                {snapshot.backupExists
+                  ? "Backup · config.toml.bak"
+                  : "Backup · none"}
+              </span>
             </div>
           </div>
         </div>

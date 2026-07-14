@@ -9,16 +9,16 @@ Grok Go 是一个面向 Windows 的 Grok Build 第三方供应商配置切换器
 - 管理多个供应商档案，支持搜索、导入和导出。
 - 支持 OpenAI Responses、OpenAI Chat Completions 和 Anthropic Messages。
 - 从供应商 `/models` 接口读取模型，也允许手动添加模型。
-- 为每个档案配置默认模型、上下文窗口、图片能力和模型列表。
+- 为每个模型独立配置上下文窗口与 reasoning effort 能力，并选择档案默认模型。
 - 应用配置前创建 `config.toml.bak`，支持一键恢复。
 - 检测配置文件被外部修改，避免静默覆盖。
 - 可选本地协议兼容模式，修复已确认的 Responses 和 Messages 流事件兼容问题，同时保留工具调用事件。
 
 ## 下载与运行
 
-普通用户推荐下载 `Grok-Go-1.6.3-Setup-x64.exe`，按安装向导完成安装。安装程序会创建桌面和开始菜单快捷方式，后续安装新版时会覆盖更新程序文件，同时保留供应商档案。
+普通用户推荐下载 `Grok-Go-1.7.0-Setup-x64.exe`，按安装向导完成安装。安装程序会创建桌面和开始菜单快捷方式，后续安装新版时会覆盖更新程序文件，同时保留供应商档案。
 
-需要免安装运行时，可以下载 `Grok-Go-1.6.3-win-x64.zip`。请先完整解压 ZIP，再运行其中的 `Grok Go.exe`；不要只复制单独的 EXE 文件。
+需要免安装运行时，可以下载 `Grok-Go-1.7.0-win-x64.zip`。请先完整解压 ZIP，再运行其中的 `Grok Go.exe`；不要只复制单独的 EXE 文件。
 
 Windows 可能提示“未知发布者”，因为当前版本尚未购买代码签名证书。请仅从本仓库的 Release 页面下载，并使用 Release 中的 `SHA256SUMS.txt` 核对文件哈希。
 
@@ -31,6 +31,8 @@ Windows 可能提示“未知发布者”，因为当前版本尚未购买代码
 3. 选择接口协议并点击“测试连接”。
 4. 添加需要写入配置的模型，并选择默认模型。
 5. 点击“应用配置”。原配置会备份为 `config.toml.bak`。
+
+模型列表接口通常只返回模型 ID，不能可靠声明能力。Grok Go 中的推理图标开关会为对应模型写入 `supports_reasoning_effort`；只有确认上游接受 reasoning effort 参数时才应开启。`grok-4.5*` 新增时默认使用 500,000 上下文，其余模型默认使用 200,000，之后都可以逐项修改。
 
 部分 Anthropic 兼容供应商不提供 `/models`，可以手动添加模型后确认强制应用。
 
@@ -75,8 +77,8 @@ pnpm run dist
 正式构建会输出安装程序和 ZIP 解压版：
 
 ```text
-release/Grok-Go-1.6.3-Setup-x64.exe
-release/Grok-Go-1.6.3-win-x64.zip
+release/Grok-Go-1.7.0-Setup-x64.exe
+release/Grok-Go-1.7.0-win-x64.zip
 ```
 
 ## 参与贡献

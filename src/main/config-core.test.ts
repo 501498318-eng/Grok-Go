@@ -17,8 +17,20 @@ const profile: ProviderProfile = {
   protocol: "openai-responses",
   defaultModel: "grok-4.5-latest",
   configuredModels: ["grok-4.5-latest", "grok-4.5", "grok-build"],
-  contextWindow: 500000,
-  imageSupport: true,
+  modelSettings: {
+    "grok-4.5-latest": {
+      contextWindow: 500000,
+      supportsReasoningEffort: true,
+    },
+    "grok-4.5": {
+      contextWindow: 500000,
+      supportsReasoningEffort: false,
+    },
+    "grok-build": {
+      contextWindow: 200000,
+      supportsReasoningEffort: false,
+    },
+  },
 };
 
 describe("config core", () => {
@@ -38,12 +50,13 @@ describe("config core", () => {
     expect(root.model["grok-4.5-latest"].model).toBe("grok-4.5-latest");
     expect(root.model["grok-4.5-latest"].base_url).toBe("https://provider.example.com/v1");
     expect(root.model["grok-4.5-latest"].api_backend).toBe("responses");
-    expect(root.model["grok-4.5-latest"].input_modalities).toEqual(["text", "image"]);
-    expect(root.model["grok-4.5-latest"].supports_image_detail_original).toBe(true);
+    expect(root.model["grok-4.5-latest"].supports_reasoning_effort).toBe(true);
+    expect(root.model["grok-4.5-latest"].input_modalities).toBeUndefined();
+    expect(root.model["grok-4.5-latest"].supports_image_detail_original).toBeUndefined();
     expect(root.model["grok-4.5"].context_window).toBe(500000);
     expect(root.model["grok-4.5"].api_key).toBe("demo-key-not-real");
-    expect(root.model["grok-4.5"].input_modalities).toBeUndefined();
-    expect(root.model["grok-build"].context_window).toBe(500000);
+    expect(root.model["grok-4.5"].supports_reasoning_effort).toBe(false);
+    expect(root.model["grok-build"].context_window).toBe(200000);
     expect(merged).toContain('[model."grok-4.5-latest"]');
   });
 
@@ -80,20 +93,48 @@ describe("config core", () => {
       apiKey: "demo-key-not-real",
       protocol: "openai-responses",
       defaultModel: "grok-4.5-latest",
-      contextWindow: 500000,
       configuredModels: ["grok-4.5-latest", "grok-4.5", "grok-build"],
-      imageSupport: true,
+      modelSettings: profile.modelSettings,
     });
     expect(profileMatchesConfig(merged, { ...profile, baseUrl: "https://provider.example.com/v1" })).toBe(true);
   });
 
-  it("removes image capability overrides when image support is disabled", () => {
-    const current = mergeProfile("", profile);
-    const merged = mergeProfile(current, { ...profile, imageSupport: false }, profile);
+  it("removes obsolete image capability overrides", () => {
+    const current = mergeProfile("", profile).replace(
+      "supports_reasoning_effort = true",
+      'supports_reasoning_effort = true\ninput_modalities = ["text", "image"]\nsupports_image_detail_original = true',
+    );
+    const merged = mergeProfile(current, profile, profile);
     const root = parseConfig(merged) as Record<string, any>;
     expect(root.model["grok-4.5-latest"].input_modalities).toBeUndefined();
     expect(root.model["grok-4.5-latest"].supports_image_detail_original).toBeUndefined();
     expect(root.endpoints.xai_api_base_url).toBe("https://provider.example.com/v1");
+  });
+
+  it("defaults new model settings by model family", () => {
+    const legacy = { ...profile } as Partial<ProviderProfile>;
+    delete legacy.modelSettings;
+    const normalized = normalizeProfile(legacy as ProviderProfile);
+
+    expect(normalized.modelSettings["grok-4.5-latest"].contextWindow).toBe(500000);
+    expect(normalized.modelSettings["grok-4.5"].contextWindow).toBe(500000);
+    expect(normalized.modelSettings["grok-build"].contextWindow).toBe(200000);
+    expect(normalized.modelSettings["grok-4.5-latest"].supportsReasoningEffort).toBe(false);
+  });
+
+  it("migrates the legacy global context window without keeping obsolete fields", () => {
+    const legacy = {
+      ...profile,
+      modelSettings: undefined,
+      contextWindow: 320000,
+      imageSupport: true,
+    } as unknown as ProviderProfile;
+    const normalized = normalizeProfile(legacy);
+
+    expect(normalized.modelSettings["grok-4.5-latest"].contextWindow).toBe(320000);
+    expect(normalized.modelSettings["grok-build"].contextWindow).toBe(320000);
+    expect(normalized).not.toHaveProperty("contextWindow");
+    expect(normalized).not.toHaveProperty("imageSupport");
   });
 
   it("writes Anthropic Messages model configuration without xAI endpoints", () => {
@@ -188,6 +229,10 @@ describe("config core", () => {
   it("imports every model table that contains an API key", () => {
     const imported = extractProfile(`[endpoints]\nmodels_base_url = "https://example.com/v1"\n\n[models]\ndefault = "grok-a"\n\n[model.grok-a]\napi_key = "secret"\ncontext_window = 500000\n\n[model."grok-b"]\napi_key = "secret"\n`);
     expect(imported?.configuredModels).toEqual(["grok-a", "grok-b"]);
+    expect(imported?.modelSettings).toEqual({
+      "grok-a": { contextWindow: 500000, supportsReasoningEffort: false },
+      "grok-b": { contextWindow: 200000, supportsReasoningEffort: false },
+    });
   });
 
   it("validates required fields and context window", () => {
@@ -203,5 +248,14 @@ describe("config core", () => {
     delete legacy.protocol;
     const merged = mergeProfile("", legacy as ProviderProfile);
     expect(extractProfile(merged)?.protocol).toBe("openai-responses");
+  });
+
+  it("validates per-model context and reasoning capability settings", () => {
+    expect(validateProfileShape({
+      ...profile,
+      modelSettings: {
+        "grok-4.5": { contextWindow: 0, supportsReasoningEffort: "yes" },
+      },
+    })).toContain("模型能力设置无效");
   });
 });

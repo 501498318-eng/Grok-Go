@@ -1,12 +1,14 @@
-import type { ProviderProfile } from "../../shared/types";
+import { defaultConfiguredModelSettings } from "../../shared/model-settings";
+import type { ApiProtocol, ProviderProfile } from "../../shared/types";
 
+/** Swiss chip palette used for profile avatars */
 export const PROFILE_COLORS = [
-  "#0ea5e9",
-  "#0f172a",
-  "#f59e0b",
-  "#8b5cf6",
-  "#10b981",
-  "#f43f5e",
+  "#002FA7",
+  "#14110E",
+  "#FF6B35",
+  "#3D3566",
+  "#0A7A3E",
+  "#8A6A00",
 ];
 
 export function blankProfile(): ProviderProfile {
@@ -18,9 +20,21 @@ export function blankProfile(): ProviderProfile {
     protocol: "openai-responses",
     defaultModel: "",
     configuredModels: [],
-    contextWindow: 256000,
-    imageSupport: true,
+    modelSettings: {},
     compatibilityProxy: false,
+  };
+}
+
+export function cloneProfile(profile: ProviderProfile): ProviderProfile {
+  return {
+    ...profile,
+    configuredModels: [...profile.configuredModels],
+    modelSettings: Object.fromEntries(
+      Object.entries(profile.modelSettings ?? {}).map(([modelId, settings]) => [
+        modelId,
+        { ...settings },
+      ]),
+    ),
   };
 }
 
@@ -44,6 +58,27 @@ export function formatDate(value?: string): string {
   }).format(new Date(value));
 }
 
+export function protocolCode(protocol: ApiProtocol): string {
+  if (protocol === "anthropic") return "messages";
+  if (protocol === "openai-chat") return "chat";
+  return "responses";
+}
+
+export function protocolBackendLabel(protocol: ApiProtocol): string {
+  if (protocol === "anthropic") return "messages";
+  if (protocol === "openai-chat") return "chat_completions";
+  return "responses";
+}
+
+export function hostFromBaseUrl(baseUrl: string): string {
+  try {
+    const url = new URL(baseUrl);
+    return url.host || baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  } catch {
+    return baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "") || "—";
+  }
+}
+
 export function classifyTomlLine(line: string): string {
   const trimmed = line.trim();
   if (!trimmed) return "";
@@ -62,10 +97,9 @@ export function tomlPreview(profile: ProviderProfile): string[] {
       : profile.protocol === "openai-chat"
         ? "chat_completions"
         : "responses";
-  const baseUrl =
-    profile.compatibilityProxy
-      ? "http://127.0.0.1:8787/v1"
-      : profile.baseUrl.replace(/\/+$/, "");
+  const baseUrl = profile.compatibilityProxy
+    ? "http://127.0.0.1:8787/v1"
+    : profile.baseUrl.replace(/\/+$/, "");
   const lines =
     profile.protocol === "anthropic"
       ? ["[models]"]
@@ -78,20 +112,21 @@ export function tomlPreview(profile: ProviderProfile): string[] {
         ];
   lines.push(`default = "${escaped(profile.defaultModel)}"`);
   for (const modelId of configuredModelIds(profile)) {
+    const settings =
+      profile.modelSettings?.[modelId] ?? defaultConfiguredModelSettings(modelId);
     lines.push("", `[model."${escaped(modelId)}"]`);
     lines.push(`model = "${escaped(modelId)}"`);
     lines.push(`base_url = "${escaped(baseUrl)}"`);
     lines.push(`api_backend = "${backend}"`);
-    if (profile.contextWindow) lines.push(`context_window = ${profile.contextWindow}`);
+    lines.push(`context_window = ${settings.contextWindow}`);
+    lines.push(
+      `supports_reasoning_effort = ${settings.supportsReasoningEffort ? "true" : "false"}`,
+    );
     lines.push('api_key = "••••••••••••••••"');
     if (profile.protocol === "anthropic") {
       lines.push(
         'extra_headers = { "x-api-key" = "••••••••••••••••", "anthropic-version" = "2023-06-01" }',
       );
-    }
-    if (modelId === profile.defaultModel && profile.imageSupport) {
-      lines.push('input_modalities = ["text", "image"]');
-      lines.push("supports_image_detail_original = true");
     }
   }
   return lines;

@@ -1,6 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
 import { parse, stringify } from "smol-toml";
-import type { ApiProtocol, ProviderProfile } from "../shared/types.js";
+import {
+  defaultConfiguredModelSettings,
+} from "../shared/model-settings.js";
+import type {
+  ApiProtocol,
+  ConfiguredModelSettings,
+  ProviderProfile,
+} from "../shared/types.js";
 
 type TomlRecord = Record<string, unknown>;
 export const COMPATIBILITY_PROXY_BASE_URL = "http://127.0.0.1:8787/v1";
@@ -55,6 +62,46 @@ function modelIds(profile: ProviderProfile): string[] {
   ];
 }
 
+function normalizedModelSettings(
+  profile: ProviderProfile,
+  ids = modelIds(profile),
+): Record<string, ConfiguredModelSettings> {
+  const raw =
+    profile.modelSettings &&
+    typeof profile.modelSettings === "object" &&
+    !Array.isArray(profile.modelSettings)
+      ? profile.modelSettings
+      : {};
+  const legacyContextWindow = positiveInteger(profile.contextWindow);
+  return Object.fromEntries(
+    ids.map((modelId) => {
+      const candidate = raw[modelId] as Partial<ConfiguredModelSettings> | undefined;
+      const defaults = defaultConfiguredModelSettings(modelId);
+      return [
+        modelId,
+        {
+          contextWindow:
+            positiveInteger(candidate?.contextWindow) ??
+            legacyContextWindow ??
+            defaults.contextWindow,
+          supportsReasoningEffort: candidate?.supportsReasoningEffort === true,
+        },
+      ];
+    }),
+  );
+}
+
+function modelSettingsSignature(profile: ProviderProfile): string {
+  const settings = normalizedModelSettings(profile);
+  return JSON.stringify(
+    Object.fromEntries(
+      Object.keys(settings)
+        .sort()
+        .map((modelId) => [modelId, settings[modelId]]),
+    ),
+  );
+}
+
 export function normalizeProfile(profile: ProviderProfile): ProviderProfile {
   const legacy = profile as ProviderProfile & {
     messagesFilterProxy?: unknown;
@@ -64,11 +111,12 @@ export function normalizeProfile(profile: ProviderProfile): ProviderProfile {
     profile.protocol === "anthropic" || profile.protocol === "openai-chat"
       ? profile.protocol
       : "openai-responses";
+  const configuredModels = modelIds(profile);
   const normalized = {
     ...profile,
     protocol,
-    configuredModels: modelIds(profile),
-    imageSupport: typeof profile.imageSupport === "boolean" ? profile.imageSupport : true,
+    configuredModels,
+    modelSettings: normalizedModelSettings(profile, configuredModels),
     compatibilityProxy:
       protocol !== "openai-chat" &&
       (profile.compatibilityProxy === true ||
@@ -76,9 +124,13 @@ export function normalizeProfile(profile: ProviderProfile): ProviderProfile {
   } as ProviderProfile & {
     messagesFilterProxy?: unknown;
     secondaryModel?: unknown;
+    contextWindow?: number;
+    imageSupport?: boolean;
   };
   delete normalized.messagesFilterProxy;
   delete normalized.secondaryModel;
+  delete normalized.contextWindow;
+  delete normalized.imageSupport;
   return normalized;
 }
 
@@ -141,20 +193,26 @@ function extractProfileFromRoot(
     compatibilityProxy && protocol !== "anthropic"
       ? endpointBaseUrl || modelBaseUrl
       : modelBaseUrl || endpointBaseUrl;
-  const inputModalities = defaultTable.input_modalities;
-  const supportsOriginal = defaultTable.supports_image_detail_original;
   const extraHeaders =
     defaultTable.extra_headers &&
     typeof defaultTable.extra_headers === "object" &&
     !Array.isArray(defaultTable.extra_headers)
       ? (defaultTable.extra_headers as TomlRecord)
       : {};
-  const hasImageCapabilityOverride =
-    Array.isArray(inputModalities) || typeof supportsOriginal === "boolean";
-  const imageSupport = hasImageCapabilityOverride
-    ? (Array.isArray(inputModalities) && inputModalities.includes("image")) ||
-      supportsOriginal === true
-    : true;
+  const modelSettings = Object.fromEntries(
+    configuredModels.map((modelId) => {
+      const config = table(modelTables, modelId);
+      const defaults = defaultConfiguredModelSettings(modelId);
+      return [
+        modelId,
+        {
+          contextWindow:
+            positiveInteger(config.context_window) ?? defaults.contextWindow,
+          supportsReasoningEffort: config.supports_reasoning_effort === true,
+        },
+      ];
+    }),
+  );
 
   if (!baseUrl && !defaultModel) return null;
 
@@ -170,8 +228,7 @@ function extractProfileFromRoot(
     compatibilityProxy,
     defaultModel,
     configuredModels,
-    contextWindow: positiveInteger(defaultTable.context_window),
-    imageSupport,
+    modelSettings,
   };
 }
 
@@ -188,10 +245,9 @@ function removeManagedFields(root: TomlRecord, profile?: ProviderProfile): void 
     delete record.base_url;
     delete record.api_backend;
     delete record.extra_headers;
-    if (modelId === profile.defaultModel) {
-      delete record.input_modalities;
-      delete record.supports_image_detail_original;
-    }
+    delete record.supports_reasoning_effort;
+    delete record.input_modalities;
+    delete record.supports_image_detail_original;
     if (Object.keys(record).length === 0) delete models[modelId];
   }
 }
@@ -239,16 +295,12 @@ export function mergeProfile(
     } else {
       delete config.extra_headers;
     }
-    if (normalized.contextWindow) config.context_window = normalized.contextWindow;
-    else delete config.context_window;
-  }
-  const defaultConfig = table(modelTables, normalized.defaultModel);
-  if (normalized.imageSupport) {
-    defaultConfig.input_modalities = ["text", "image"];
-    defaultConfig.supports_image_detail_original = true;
-  } else {
-    delete defaultConfig.input_modalities;
-    delete defaultConfig.supports_image_detail_original;
+    const settings =
+      normalized.modelSettings[modelId] ?? defaultConfiguredModelSettings(modelId);
+    config.context_window = settings.contextWindow;
+    config.supports_reasoning_effort = settings.supportsReasoningEffort;
+    delete config.input_modalities;
+    delete config.supports_image_detail_original;
   }
 
   return `${stringify(root)}\n`;
@@ -274,8 +326,7 @@ export function profileMatchesConfig(
         current.protocol === normalized.protocol &&
         current.compatibilityProxy === normalized.compatibilityProxy &&
         current.defaultModel === profile.defaultModel &&
-        current.contextWindow === profile.contextWindow &&
-        current.imageSupport === normalized.imageSupport &&
+        modelSettingsSignature(current) === modelSettingsSignature(normalized) &&
         JSON.stringify([...current.configuredModels].sort()) ===
           JSON.stringify([...modelIds(profile)].sort()),
     );
@@ -319,6 +370,25 @@ export function validateProfileShape(profile: unknown): string[] {
     (!Number.isInteger(value.contextWindow) || value.contextWindow <= 0)
   ) {
     errors.push("上下文窗口必须是正整数");
+  }
+  const rawModelSettings = (value as { modelSettings?: unknown }).modelSettings;
+  if (
+    rawModelSettings !== undefined &&
+    (!rawModelSettings ||
+      typeof rawModelSettings !== "object" ||
+      Array.isArray(rawModelSettings) ||
+      Object.entries(rawModelSettings).some(([, settings]) => {
+        if (!settings || typeof settings !== "object" || Array.isArray(settings)) return true;
+        const item = settings as Partial<ConfiguredModelSettings>;
+        return (
+          (item.contextWindow !== undefined &&
+            (!Number.isInteger(item.contextWindow) || item.contextWindow <= 0)) ||
+          (item.supportsReasoningEffort !== undefined &&
+            typeof item.supportsReasoningEffort !== "boolean")
+        );
+      }))
+  ) {
+    errors.push("模型能力设置无效");
   }
   return errors;
 }

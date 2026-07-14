@@ -28,8 +28,11 @@ const profile: ProviderProfile = {
   protocol: "openai-responses",
   defaultModel: "grok-4.5-latest",
   configuredModels: ["grok-4.5-latest", "grok-4.5", "grok-build"],
-  contextWindow: 500000,
-  imageSupport: true,
+  modelSettings: {
+    "grok-4.5-latest": { contextWindow: 500000, supportsReasoningEffort: true },
+    "grok-4.5": { contextWindow: 500000, supportsReasoningEffort: false },
+    "grok-build": { contextWindow: 200000, supportsReasoningEffort: false },
+  },
 };
 
 afterEach(() => {
@@ -57,7 +60,7 @@ describe("ProfileService", () => {
     expect(snapshot.profiles).toHaveLength(1);
     expect(snapshot.profiles[0]).toMatchObject({ name: "新供应商", baseUrl: "https://" });
     expect(snapshot.profiles[0].configuredModels).toEqual([]);
-    expect(snapshot.profiles[0].imageSupport).toBe(true);
+    expect(snapshot.profiles[0].modelSettings).toEqual({});
     expect(snapshot.profiles[0].protocol).toBe("openai-responses");
   });
 
@@ -82,7 +85,10 @@ describe("ProfileService", () => {
     }));
     const snapshot = await service.snapshot();
     expect(snapshot.profiles[0].configuredModels).toEqual(["grok-main", "grok-helper"]);
-    expect(snapshot.profiles[0].imageSupport).toBe(true);
+    expect(snapshot.profiles[0].modelSettings).toEqual({
+      "grok-main": { contextWindow: 256000, supportsReasoningEffort: false },
+      "grok-helper": { contextWindow: 256000, supportsReasoningEffort: false },
+    });
     expect(snapshot.profiles[0].compatibilityProxy).toBe(true);
     expect(snapshot.profiles[0]).not.toHaveProperty("messagesFilterProxy");
     expect(snapshot.profiles[0]).not.toHaveProperty("secondaryModel");

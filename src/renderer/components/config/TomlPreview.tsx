@@ -1,4 +1,4 @@
-import { Copy, FileCode2 } from "lucide-react";
+import { Copy } from "lucide-react";
 import { classifyTomlLine } from "../../lib/profile-utils";
 
 export function TomlPreview({
@@ -13,19 +13,19 @@ export function TomlPreview({
   return (
     <aside className="toml-side-panel" aria-label="config.toml 预览">
       <div className="toml-side-head">
-        <span className="section-icon dark">
-          <FileCode2 size={15} />
+        <span className="section-icon dark" aria-hidden="true">
+          T
         </span>
         <div>
-          <h2>config.toml 预览</h2>
-          <p>根据当前表单实时生成</p>
+          <h2>config.toml</h2>
+          <p>Live preview</p>
         </div>
       </div>
       <div className="toml-toolbar">
         <span title={configPath}>{configPath}</span>
         <button className="secondary-button compact-button" onClick={onCopy}>
           <Copy size={13} />
-          复制
+          Copy
         </button>
       </div>
       <pre className="toml-preview">

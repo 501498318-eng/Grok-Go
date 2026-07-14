@@ -1,5 +1,8 @@
-import { Cpu, LoaderCircle, PlugZap } from "lucide-react";
-import type { ProviderProfile } from "../../../shared/types";
+import { LoaderCircle, PlugZap } from "lucide-react";
+import type {
+  ConfiguredModelSettings,
+  ProviderProfile,
+} from "../../../shared/types";
 import type { BusyAction } from "../../types";
 import { configuredModelIds } from "../../lib/profile-utils";
 import { ModelConfigurator } from "./ModelConfigurator";
@@ -11,6 +14,7 @@ export function ConfiguredModelsSection({
   onTestConnection,
   onAdd,
   onRemove,
+  onUpdateSettings,
 }: {
   draft: ProviderProfile;
   busy: BusyAction;
@@ -18,17 +22,21 @@ export function ConfiguredModelsSection({
   onTestConnection: () => void;
   onAdd: (modelId: string) => void;
   onRemove: (modelId: string) => void;
+  onUpdateSettings: (
+    modelId: string,
+    patch: Partial<ConfiguredModelSettings>,
+  ) => void;
 }) {
   const models = configuredModelIds(draft);
   return (
     <section className="form-section">
       <div className="form-section-head">
-        <span className="section-icon">
-          <Cpu size={15} />
+        <span className="section-icon panel-index" aria-hidden="true">
+          03
         </span>
         <h2>已配置模型</h2>
         <div className="section-head-actions">
-          <span>共 {models.length} 个</span>
+          <span>{models.length} Models</span>
           <button
             className="secondary-button compact-button test-connection-button"
             onClick={onTestConnection}
@@ -48,8 +56,10 @@ export function ConfiguredModelsSection({
           availableModels={availableModels}
           defaultModel={draft.defaultModel}
           configuredModels={models}
+          modelSettings={draft.modelSettings}
           onAdd={onAdd}
           onRemove={onRemove}
+          onUpdateSettings={onUpdateSettings}
         />
       </div>
     </section>
