@@ -3,10 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerIpc } from "./ipc.js";
 import { ProfileService } from "./profile-service.js";
-import { MessagesFilterProxy } from "./messages-filter-proxy.js";
+import { ApiCompatibilityProxy } from "./api-compatibility-proxy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const messagesProxy = new MessagesFilterProxy();
+const compatibilityProxy = new ApiCompatibilityProxy();
 let mainWindow: BrowserWindow | undefined;
 let tray: Tray | undefined;
 let quitting = false;
@@ -43,7 +43,7 @@ function createWindow(): BrowserWindow {
   if (devUrl) void window.loadURL(devUrl);
   else void window.loadFile(path.join(__dirname, "../../dist/index.html"));
   window.on("close", (event) => {
-    if (!quitting && messagesProxy.running) {
+    if (!quitting && compatibilityProxy.running) {
       event.preventDefault();
       window.hide();
     }
@@ -63,7 +63,7 @@ app.whenReady().then(() => {
     userDataPath,
     configPath,
     process.env.APPDATA,
-    messagesProxy,
+    compatibilityProxy,
   );
   registerIpc(service);
   createWindow();
@@ -76,7 +76,7 @@ app.whenReady().then(() => {
   ]));
   tray.on("double-click", showMainWindow);
   void service.syncActiveProxy().catch((error) =>
-    console.error("Messages proxy startup failed", error),
+    console.error("Compatibility proxy startup failed", error),
   );
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -84,12 +84,12 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin" && !messagesProxy.running) app.quit();
+  if (process.platform !== "darwin" && !compatibilityProxy.running) app.quit();
 });
 
 app.on("before-quit", () => {
   quitting = true;
-  void messagesProxy.stop();
+  void compatibilityProxy.stop();
   tray?.destroy();
   tray = undefined;
 });

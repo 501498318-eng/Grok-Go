@@ -1,6 +1,6 @@
 {
     "name": "grok-config-switcher",
-    "version": "1.6.2",
+    "version": "1.6.3",
     "description": "Grok Go - Windows desktop provider switcher for Grok Build",
     "main": "dist-electron/main/main.js",
     "author": "501498318-eng",

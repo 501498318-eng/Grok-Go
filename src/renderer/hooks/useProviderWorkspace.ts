@@ -66,7 +66,17 @@ export function useProviderWorkspace() {
   }, [snapshot, query]);
 
   const update: ProfileUpdater = (key, value) => {
-    setDraft((current) => (current ? { ...current, [key]: value } : current));
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            [key]: value,
+            ...(key === "protocol" && value === "openai-chat"
+              ? { compatibilityProxy: false }
+              : {}),
+          }
+        : current,
+    );
     if (key === "baseUrl" || key === "apiKey" || key === "protocol") {
       connection.reset();
     }

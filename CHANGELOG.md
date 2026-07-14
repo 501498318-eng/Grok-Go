@@ -2,6 +2,14 @@
 
 本项目遵循语义化版本号。
 
+## 1.6.3 - 2026-07-14
+
+- 新增按档案启用的协议兼容模式，统一管理 OpenAI Responses 与 Anthropic Messages 过滤规则。
+- 修复部分 Responses 兼容接口插入缺少 `sequence_number` 的 synthetic 空首帧时，Grok Build 无法继续对话和调用工具的问题。
+- 保留 Responses 函数调用事件及合法序号，不生成、重排或猜测上游字段。
+- 自动迁移旧版 Messages thinking 过滤开关，现有 Anthropic 档案行为保持不变。
+- 增加 Responses 流式、非流式、函数调用、异常放行和协议透传测试。
+
 ## 1.6.2 - 2026-07-14
 
 - 修复 config.toml 原本不存在、应用前被其他程序创建时可能被覆盖的问题。

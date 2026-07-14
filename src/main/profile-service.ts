@@ -21,7 +21,7 @@ import {
   validateProfileShape,
 } from "./config-core.js";
 import { syncEditorDefaultModel } from "./editor-settings.js";
-import { MessagesFilterProxy } from "./messages-filter-proxy.js";
+import { ApiCompatibilityProxy } from "./api-compatibility-proxy.js";
 
 const EMPTY_STORE = (configPath: string): ProfileStore => ({
   schemaVersion: 1,
@@ -67,7 +67,7 @@ export class ProfileService {
     private readonly userDataPath: string,
     private readonly defaultConfigPath: string,
     private readonly editorAppDataPath = process.env.APPDATA,
-    private readonly messagesProxy?: MessagesFilterProxy,
+    private readonly compatibilityProxy?: ApiCompatibilityProxy,
   ) {
     this.storePath = path.join(userDataPath, "profiles.json");
   }
@@ -90,7 +90,7 @@ export class ProfileService {
           baseUrl: "https://",
           apiKey: "",
           protocol: "openai-responses",
-          messagesFilterProxy: false,
+          compatibilityProxy: false,
           defaultModel: "",
           configuredModels: [],
           contextWindow: 256000,
@@ -265,9 +265,13 @@ export class ProfileService {
     const previous = store.profiles.find(
       (item) => item.id === store.activeProfileId,
     );
-    if (profile.protocol === "anthropic" && profile.messagesFilterProxy) {
-      if (!this.messagesProxy) throw new Error("当前运行环境未启用 Messages 过滤代理");
-      await this.messagesProxy.start(profile.baseUrl);
+    const normalizedProfile = normalizeProfile(profile);
+    if (normalizedProfile.compatibilityProxy) {
+      if (!this.compatibilityProxy) throw new Error("当前运行环境未启用协议兼容代理");
+      await this.compatibilityProxy.start(
+        normalizedProfile.baseUrl,
+        normalizedProfile.protocol,
+      );
     }
     const nextText = mergeProfile(currentText, profile, previous);
     await mkdir(path.dirname(store.configPath), { recursive: true });
@@ -283,8 +287,8 @@ export class ProfileService {
     else store.profiles.push(saved);
     store.activeProfileId = saved.id;
     await this.writeStore(store);
-    if (!(saved.protocol === "anthropic" && saved.messagesFilterProxy)) {
-      await this.messagesProxy?.stop();
+    if (!saved.compatibilityProxy) {
+      await this.compatibilityProxy?.stop();
     }
     const editorSync = await syncEditorDefaultModel(
       saved.defaultModel,
@@ -303,13 +307,14 @@ export class ProfileService {
   }
 
   async syncActiveProxy(): Promise<void> {
-    if (!this.messagesProxy) return;
+    if (!this.compatibilityProxy) return;
     const store = await this.readStore();
     const active = store.profiles.find((profile) => profile.id === store.activeProfileId);
-    if (active?.protocol === "anthropic" && active.messagesFilterProxy) {
-      await this.messagesProxy.start(active.baseUrl);
+    const normalized = active ? normalizeProfile(active) : undefined;
+    if (normalized?.compatibilityProxy) {
+      await this.compatibilityProxy.start(normalized.baseUrl, normalized.protocol);
     } else {
-      await this.messagesProxy.stop();
+      await this.compatibilityProxy.stop();
     }
   }
 

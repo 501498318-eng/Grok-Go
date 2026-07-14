@@ -20,7 +20,7 @@ export function blankProfile(): ProviderProfile {
     configuredModels: [],
     contextWindow: 256000,
     imageSupport: true,
-    messagesFilterProxy: false,
+    compatibilityProxy: false,
   };
 }
 
@@ -63,7 +63,7 @@ export function tomlPreview(profile: ProviderProfile): string[] {
         ? "chat_completions"
         : "responses";
   const baseUrl =
-    profile.protocol === "anthropic" && profile.messagesFilterProxy
+    profile.compatibilityProxy
       ? "http://127.0.0.1:8787/v1"
       : profile.baseUrl.replace(/\/+$/, "");
   const lines =

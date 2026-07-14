@@ -13,7 +13,7 @@ const seed: ProviderProfile[] = [
     baseUrl: "https://provider.example.com/v1",
     apiKey: "demo-key-not-real",
     protocol: "openai-responses",
-    messagesFilterProxy: false,
+    compatibilityProxy: false,
     defaultModel: "grok-4.5-latest",
     configuredModels: ["grok-4.5-latest", "grok-4.5", "grok-build"],
     contextWindow: 500000,
@@ -27,7 +27,7 @@ const seed: ProviderProfile[] = [
     baseUrl: "https://api.x.ai/v1",
     apiKey: "demo-key-not-real",
     protocol: "openai-responses",
-    messagesFilterProxy: false,
+    compatibilityProxy: false,
     defaultModel: "grok-4",
     configuredModels: ["grok-4"],
     contextWindow: 256000,
@@ -39,7 +39,7 @@ const seed: ProviderProfile[] = [
     baseUrl: "https://backup.example.com/v1",
     apiKey: "demo-key-not-real",
     protocol: "anthropic",
-    messagesFilterProxy: true,
+    compatibilityProxy: true,
     defaultModel: "grok-4.5",
     configuredModels: ["grok-4.5"],
     imageSupport: true,
@@ -50,7 +50,7 @@ const seed: ProviderProfile[] = [
     baseUrl: "http://127.0.0.1:11434/v1",
     apiKey: "demo-key-not-real",
     protocol: "openai-chat",
-    messagesFilterProxy: false,
+    compatibilityProxy: false,
     defaultModel: "grok-local",
     configuredModels: ["grok-local"],
     imageSupport: false,
@@ -68,7 +68,7 @@ const configFor = (profile: ProviderProfile) => {
   const modelIds = [...new Set([profile.defaultModel, ...profile.configuredModels])];
   const backend = profile.protocol === "anthropic" ? "messages" : profile.protocol === "openai-chat" ? "chat_completions" : "responses";
   const modelTables = modelIds.map((modelId) =>
-    `[model."${modelId}"]\nmodel = "${modelId}"\nbase_url = "${profile.protocol === "anthropic" && profile.messagesFilterProxy ? "http://127.0.0.1:8787/v1" : profile.baseUrl}"\napi_backend = "${backend}"\ncontext_window = ${profile.contextWindow ?? 256000}\napi_key = "${profile.apiKey}"${modelId === profile.defaultModel && profile.imageSupport ? '\ninput_modalities = ["text", "image"]\nsupports_image_detail_original = true' : ""}`,
+    `[model."${modelId}"]\nmodel = "${modelId}"\nbase_url = "${profile.compatibilityProxy ? "http://127.0.0.1:8787/v1" : profile.baseUrl}"\napi_backend = "${backend}"\ncontext_window = ${profile.contextWindow ?? 256000}\napi_key = "${profile.apiKey}"${modelId === profile.defaultModel && profile.imageSupport ? '\ninput_modalities = ["text", "image"]\nsupports_image_detail_original = true' : ""}`,
   );
   const endpoints = profile.protocol === "anthropic" ? "" : `[endpoints]\nmodels_base_url = "${profile.baseUrl}"\nxai_api_base_url = "${profile.baseUrl}"\n\n`;
   return `${endpoints}[models]\ndefault = "${profile.defaultModel}"\n\n${modelTables.join("\n\n")}\n`;

@@ -3,6 +3,7 @@ import type { ProviderProfile } from "../shared/types.js";
 import {
   extractProfile,
   mergeProfile,
+  normalizeProfile,
   parseConfig,
   profileMatchesConfig,
   validateProfileShape,
@@ -124,7 +125,7 @@ describe("config core", () => {
     const proxied = {
       ...profile,
       protocol: "anthropic" as const,
-      messagesFilterProxy: true,
+      compatibilityProxy: true,
     };
     const merged = mergeProfile("", proxied);
     const root = parseConfig(merged) as Record<string, any>;
@@ -133,16 +134,55 @@ describe("config core", () => {
     );
     expect(extractProfile(merged)).toMatchObject({
       baseUrl: "http://127.0.0.1:8787/v1",
-      messagesFilterProxy: true,
+      compatibilityProxy: true,
     });
     expect(profileMatchesConfig(merged, proxied)).toBe(true);
   });
 
+  it("writes a proxied Responses model URL while retaining upstream endpoints", () => {
+    const proxied = { ...profile, compatibilityProxy: true };
+    const merged = mergeProfile("", proxied);
+    const root = parseConfig(merged) as Record<string, any>;
+
+    expect(root.endpoints.models_base_url).toBe("https://provider.example.com/v1");
+    expect(root.endpoints.xai_api_base_url).toBe("https://provider.example.com/v1");
+    expect(root.model["grok-4.5-latest"].base_url).toBe(
+      "http://127.0.0.1:8787/v1",
+    );
+    expect(extractProfile(merged)).toMatchObject({
+      baseUrl: "https://provider.example.com/v1",
+      protocol: "openai-responses",
+      compatibilityProxy: true,
+    });
+    expect(profileMatchesConfig(merged, proxied)).toBe(true);
+  });
+
+  it("migrates the legacy Messages proxy flag to compatibility mode", () => {
+    const legacy = {
+      ...profile,
+      protocol: "anthropic" as const,
+      messagesFilterProxy: true,
+    } as ProviderProfile & { messagesFilterProxy: boolean };
+    const normalized = normalizeProfile(legacy);
+
+    expect(normalized.compatibilityProxy).toBe(true);
+    expect(normalized).not.toHaveProperty("messagesFilterProxy");
+  });
+
   it("writes OpenAI Chat Completions when selected", () => {
-    const merged = mergeProfile("", { ...profile, protocol: "openai-chat" });
+    const chat = {
+      ...profile,
+      protocol: "openai-chat" as const,
+      compatibilityProxy: true,
+    };
+    const merged = mergeProfile("", chat);
     const root = parseConfig(merged) as Record<string, any>;
     expect(root.model["grok-4.5-latest"].api_backend).toBe("chat_completions");
+    expect(root.model["grok-4.5-latest"].base_url).toBe(
+      "https://provider.example.com/v1",
+    );
     expect(extractProfile(merged)?.protocol).toBe("openai-chat");
+    expect(normalizeProfile(chat).compatibilityProxy).toBe(false);
   });
 
   it("imports every model table that contains an API key", () => {

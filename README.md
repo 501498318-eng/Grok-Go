@@ -12,13 +12,13 @@ Grok Go 是一个面向 Windows 的 Grok Build 第三方供应商配置切换器
 - 为每个档案配置默认模型、上下文窗口、图片能力和模型列表。
 - 应用配置前创建 `config.toml.bak`，支持一键恢复。
 - 检测配置文件被外部修改，避免静默覆盖。
-- 可选本地 Messages 过滤代理，过滤缺少 `signature` 的 thinking 块，同时保留工具调用事件。
+- 可选本地协议兼容模式，修复已确认的 Responses 和 Messages 流事件兼容问题，同时保留工具调用事件。
 
 ## 下载与运行
 
-普通用户推荐下载 `Grok-Go-1.6.2-Setup-x64.exe`，按安装向导完成安装。安装程序会创建桌面和开始菜单快捷方式，后续安装新版时会覆盖更新程序文件，同时保留供应商档案。
+普通用户推荐下载 `Grok-Go-1.6.3-Setup-x64.exe`，按安装向导完成安装。安装程序会创建桌面和开始菜单快捷方式，后续安装新版时会覆盖更新程序文件，同时保留供应商档案。
 
-需要免安装运行时，可以下载 `Grok-Go-1.6.2-win-x64.zip`。请先完整解压 ZIP，再运行其中的 `Grok Go.exe`；不要只复制单独的 EXE 文件。
+需要免安装运行时，可以下载 `Grok-Go-1.6.3-win-x64.zip`。请先完整解压 ZIP，再运行其中的 `Grok Go.exe`；不要只复制单独的 EXE 文件。
 
 Windows 可能提示“未知发布者”，因为当前版本尚未购买代码签名证书。请仅从本仓库的 Release 页面下载，并使用 Release 中的 `SHA256SUMS.txt` 核对文件哈希。
 
@@ -34,14 +34,17 @@ Windows 可能提示“未知发布者”，因为当前版本尚未购买代码
 
 部分 Anthropic 兼容供应商不提供 `/models`，可以手动添加模型后确认强制应用。
 
-## Messages thinking 过滤代理
+## 协议兼容模式
 
-某些 Anthropic 兼容接口会返回缺少 `signature` 的 thinking 块，使 Grok Build 无法继续解析工具调用。选择“Anthropic Messages”并开启“过滤不兼容的 thinking”后，Grok Go 会：
+部分第三方兼容接口会返回 Grok Build 无法解析的流事件。为对应档案开启“协议兼容模式”后，Grok Go 会：
 
 - 在本机启动 `127.0.0.1:8787` 代理；
 - 将对应模型的 `base_url` 写为 `http://127.0.0.1:8787/v1`；
-- 过滤 thinking 块，保留 `tool_use`、工具名和 `input_json_delta`；
+- 对 Anthropic Messages 过滤 thinking 块，并保留 `tool_use`、工具名和 `input_json_delta`；
+- 对 OpenAI Responses 只过滤缺少 `sequence_number` 的 synthetic 空首帧，并保留函数调用事件和原始序号；
 - 窗口关闭后驻留系统托盘，避免代理中断。
+
+兼容模式只应用经过验证的精确规则。它不会补造工具名、调用 ID、参数或事件序号，也不会自动修复乱序、鉴权失败、模型不存在和上游中断。
 
 要彻底退出，请在系统托盘菜单中选择“退出并停止本地代理”。
 
@@ -72,8 +75,8 @@ pnpm run dist
 正式构建会输出安装程序和 ZIP 解压版：
 
 ```text
-release/Grok-Go-1.6.2-Setup-x64.exe
-release/Grok-Go-1.6.2-win-x64.zip
+release/Grok-Go-1.6.3-Setup-x64.exe
+release/Grok-Go-1.6.3-win-x64.zip
 ```
 
 ## 参与贡献

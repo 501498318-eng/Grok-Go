@@ -6,7 +6,7 @@ export interface ProviderProfile {
   baseUrl: string;
   apiKey: string;
   protocol: ApiProtocol;
-  messagesFilterProxy?: boolean;
+  compatibilityProxy?: boolean;
   defaultModel: string;
   configuredModels: string[];
   contextWindow?: number;

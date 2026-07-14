@@ -3,10 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ProviderProfile } from "../shared/types.js";
+import { ApiCompatibilityProxy } from "./api-compatibility-proxy.js";
 import { ProfileService } from "./profile-service.js";
 
 const tempDirs: string[] = [];
-async function fixture() {
+async function fixture(compatibilityProxy?: ApiCompatibilityProxy) {
   const root = await mkdtemp(path.join(os.tmpdir(), "grok-switcher-"));
   tempDirs.push(root);
   const configPath = path.join(root, ".grok", "config.toml");
@@ -14,6 +15,7 @@ async function fixture() {
     path.join(root, "data"),
     configPath,
     path.join(root, "appdata"),
+    compatibilityProxy,
   );
   return { root, configPath, service };
 }
@@ -71,6 +73,8 @@ describe("ProfileService", () => {
         name: "旧档案",
         baseUrl: "https://legacy.example/v1",
         apiKey: "old-key",
+        protocol: "anthropic",
+        messagesFilterProxy: true,
         defaultModel: "grok-main",
         secondaryModel: "grok-helper",
         contextWindow: 256000,
@@ -79,7 +83,33 @@ describe("ProfileService", () => {
     const snapshot = await service.snapshot();
     expect(snapshot.profiles[0].configuredModels).toEqual(["grok-main", "grok-helper"]);
     expect(snapshot.profiles[0].imageSupport).toBe(true);
+    expect(snapshot.profiles[0].compatibilityProxy).toBe(true);
+    expect(snapshot.profiles[0]).not.toHaveProperty("messagesFilterProxy");
     expect(snapshot.profiles[0]).not.toHaveProperty("secondaryModel");
+  });
+
+  it("starts the selected protocol rule and stops it for direct profiles", async () => {
+    const proxy = new ApiCompatibilityProxy();
+    const start = vi.spyOn(proxy, "start").mockResolvedValue();
+    const stop = vi.spyOn(proxy, "stop").mockResolvedValue();
+    const { service } = await fixture(proxy);
+
+    const applied = await service.apply(
+      { ...profile, compatibilityProxy: true },
+      { expectedHash: null },
+    );
+    expect(applied.ok).toBe(true);
+    expect(start).toHaveBeenCalledWith(
+      "https://provider.example/v1",
+      "openai-responses",
+    );
+    expect(stop).not.toHaveBeenCalled();
+
+    await service.apply(
+      { ...profile, compatibilityProxy: false },
+      { expectedHash: applied.snapshot.configHash },
+    );
+    expect(stop).toHaveBeenCalledOnce();
   });
 
   it("creates one backup, applies atomically, and swaps on restore", async () => {

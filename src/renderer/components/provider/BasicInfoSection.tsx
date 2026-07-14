@@ -68,21 +68,23 @@ export function BasicInfoSection({
               ))}
             </div>
           </div>
-          {draft.protocol === "anthropic" ? (
+          {draft.protocol !== "openai-chat" ? (
             <label className="toggle-card span-2">
               <span className="toggle-card-copy">
-                <strong>过滤不兼容的 thinking</strong>
+                <strong>协议兼容模式</strong>
                 <span>
-                  启动 127.0.0.1:8787 代理，过滤缺少 signature 的 thinking 块
+                  {draft.protocol === "anthropic"
+                    ? "过滤不兼容的 thinking，同时保留工具调用事件"
+                    : "过滤缺少 sequence_number 的 synthetic 空首帧"}
                 </span>
               </span>
               <span className="toggle-row">
                 <input
                   type="checkbox"
                   role="switch"
-                  checked={draft.messagesFilterProxy === true}
+                  checked={draft.compatibilityProxy === true}
                   onChange={(event) =>
-                    onUpdate("messagesFilterProxy", event.target.checked)
+                    onUpdate("compatibilityProxy", event.target.checked)
                   }
                 />
                 <span className="toggle-track" aria-hidden="true">

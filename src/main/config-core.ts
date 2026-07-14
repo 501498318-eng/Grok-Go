@@ -3,7 +3,7 @@ import { parse, stringify } from "smol-toml";
 import type { ApiProtocol, ProviderProfile } from "../shared/types.js";
 
 type TomlRecord = Record<string, unknown>;
-export const MESSAGES_FILTER_PROXY_BASE_URL = "http://127.0.0.1:8787/v1";
+export const COMPATIBILITY_PROXY_BASE_URL = "http://127.0.0.1:8787/v1";
 
 function table(parent: TomlRecord, key: string): TomlRecord {
   const value = parent[key];
@@ -56,25 +56,36 @@ function modelIds(profile: ProviderProfile): string[] {
 }
 
 export function normalizeProfile(profile: ProviderProfile): ProviderProfile {
+  const legacy = profile as ProviderProfile & {
+    messagesFilterProxy?: unknown;
+    secondaryModel?: unknown;
+  };
+  const protocol =
+    profile.protocol === "anthropic" || profile.protocol === "openai-chat"
+      ? profile.protocol
+      : "openai-responses";
   const normalized = {
     ...profile,
-    protocol:
-      profile.protocol === "anthropic" || profile.protocol === "openai-chat"
-        ? profile.protocol
-        : "openai-responses",
+    protocol,
     configuredModels: modelIds(profile),
     imageSupport: typeof profile.imageSupport === "boolean" ? profile.imageSupport : true,
-    messagesFilterProxy:
-      profile.protocol === "anthropic" && profile.messagesFilterProxy === true,
-  } as ProviderProfile & { secondaryModel?: unknown };
+    compatibilityProxy:
+      protocol !== "openai-chat" &&
+      (profile.compatibilityProxy === true ||
+        (protocol === "anthropic" && legacy.messagesFilterProxy === true)),
+  } as ProviderProfile & {
+    messagesFilterProxy?: unknown;
+    secondaryModel?: unknown;
+  };
+  delete normalized.messagesFilterProxy;
   delete normalized.secondaryModel;
   return normalized;
 }
 
 export function effectiveBaseUrl(profile: ProviderProfile): string {
   const normalized = normalizeProfile(profile);
-  return normalized.messagesFilterProxy
-    ? MESSAGES_FILTER_PROXY_BASE_URL
+  return normalized.compatibilityProxy
+    ? COMPATIBILITY_PROXY_BASE_URL
     : normalized.baseUrl.replace(/\/+$/, "");
 }
 
@@ -117,11 +128,19 @@ function extractProfileFromRoot(
   const firstConfiguredTable = configuredModels.length
     ? table(modelTables, configuredModels[0])
     : ({} as TomlRecord);
+  const modelBaseUrl =
+    text(defaultTable.base_url) || text(firstConfiguredTable.base_url);
+  const endpointBaseUrl =
+    text(endpoints.models_base_url) || text(endpoints.xai_api_base_url);
+  const protocol = protocolFromBackend(
+    defaultTable.api_backend || firstConfiguredTable.api_backend,
+  );
+  const compatibilityProxy =
+    modelBaseUrl.replace(/\/+$/, "") === COMPATIBILITY_PROXY_BASE_URL;
   const baseUrl =
-    text(defaultTable.base_url) ||
-    text(firstConfiguredTable.base_url) ||
-    text(endpoints.models_base_url) ||
-    text(endpoints.xai_api_base_url);
+    compatibilityProxy && protocol !== "anthropic"
+      ? endpointBaseUrl || modelBaseUrl
+      : modelBaseUrl || endpointBaseUrl;
   const inputModalities = defaultTable.input_modalities;
   const supportsOriginal = defaultTable.supports_image_detail_original;
   const extraHeaders =
@@ -147,12 +166,8 @@ function extractProfileFromRoot(
       text(defaultTable.api_key) ||
       text(extraHeaders["x-api-key"]) ||
       text(firstConfiguredTable.api_key),
-    protocol: protocolFromBackend(
-      defaultTable.api_backend || firstConfiguredTable.api_backend,
-    ),
-    messagesFilterProxy:
-      text(defaultTable.base_url).replace(/\/+$/, "") ===
-      MESSAGES_FILTER_PROXY_BASE_URL,
+    protocol,
+    compatibilityProxy,
     defaultModel,
     configuredModels,
     contextWindow: positiveInteger(defaultTable.context_window),
@@ -190,15 +205,16 @@ export function mergeProfile(
   removeManagedFields(root, previousProfile);
   const normalized = normalizeProfile(profile);
 
-  const baseUrl = effectiveBaseUrl(normalized);
+  const modelBaseUrl = effectiveBaseUrl(normalized);
+  const upstreamBaseUrl = normalized.baseUrl.replace(/\/+$/, "");
   const endpoints = table(root, "endpoints");
   if (normalized.protocol === "anthropic") {
     delete endpoints.models_base_url;
     delete endpoints.xai_api_base_url;
     if (Object.keys(endpoints).length === 0) delete root.endpoints;
   } else {
-    endpoints.models_base_url = baseUrl;
-    endpoints.xai_api_base_url = baseUrl;
+    endpoints.models_base_url = upstreamBaseUrl;
+    endpoints.xai_api_base_url = upstreamBaseUrl;
   }
   table(root, "models").default = normalized.defaultModel;
 
@@ -212,7 +228,7 @@ export function mergeProfile(
   for (const modelId of normalized.configuredModels) {
     const config = table(modelTables, modelId);
     config.model = modelId;
-    config.base_url = baseUrl;
+    config.base_url = modelBaseUrl;
     config.api_backend = backendForProtocol(normalized.protocol);
     config.api_key = normalized.apiKey;
     if (normalized.protocol === "anthropic") {
@@ -246,15 +262,20 @@ export function profileMatchesConfig(
   try {
     const root = parseConfig(configText);
     const current = extractProfileFromRoot(root, "当前配置");
+    const normalized = normalizeProfile(profile);
+    const expectedBaseUrl =
+      normalized.compatibilityProxy && normalized.protocol === "anthropic"
+        ? effectiveBaseUrl(normalized)
+        : normalized.baseUrl.replace(/\/+$/, "");
     return Boolean(
       current &&
-        current.baseUrl.replace(/\/+$/, "") === effectiveBaseUrl(profile) &&
+        current.baseUrl.replace(/\/+$/, "") === expectedBaseUrl &&
         current.apiKey === profile.apiKey &&
-        current.protocol === normalizeProfile(profile).protocol &&
-        current.messagesFilterProxy === normalizeProfile(profile).messagesFilterProxy &&
+        current.protocol === normalized.protocol &&
+        current.compatibilityProxy === normalized.compatibilityProxy &&
         current.defaultModel === profile.defaultModel &&
         current.contextWindow === profile.contextWindow &&
-        current.imageSupport === normalizeProfile(profile).imageSupport &&
+        current.imageSupport === normalized.imageSupport &&
         JSON.stringify([...current.configuredModels].sort()) ===
           JSON.stringify([...modelIds(profile)].sort()),
     );
